@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.haizhi</groupId>
+  <artifactId>volans</artifactId>
+  <packaging>pom</packaging>
+  <version>1.0.0</version>
+  <modules>
+    <module>volans-common-flink-base</module>
+    <module>volans-flink-loader</module>
+  </modules>
+
+  <name>volans</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>1.8</java.version>
+    <scala.binary.version>2.11</scala.binary.version>
+    <scala.version>2.11.8</scala.version>
+    <scala.prefix>2.11</scala.prefix>
+    <flink.version>1.10.0</flink.version>
+    <hbase.version>1.2.0</hbase.version>
+    <elasticsearch.version>6.4.2</elasticsearch.version>
+    <tinkerpop.version>3.4.4</tinkerpop.version>
+    <janusgraph.version>0.4.1</janusgraph.version>
+    <janusgraph.hbase1.version>0.4.1_hbase1</janusgraph.hbase1.version>
+    <volans.version>1.0.0</volans.version>
+    <scope.version>provided</scope.version>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>add-dependencies-for-IDEA</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+      <properties>
+        <scope.version>compile</scope.version>
+      </properties>
+    </profile>
+  </profiles>
+
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Flink start-->
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-scala_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-streaming-scala_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-clients_${scala.binary.version}</artifactId>
+      <version>${flink.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-shaded-hadoop-2</artifactId>
+      <version>2.4.1-7.0</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <!-- Flink end-->
+
+    <!--scala start-->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-compiler</artifactId>
+      <version>${scala.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-reflect</artifactId>
+      <version>${scala.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
+    <!--scala end-->
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <encoding>${project.build.sourceEncoding}</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scalaVersion>${scala.version}</scalaVersion>
+          <args>
+            <arg>-target:jvm-1.8</arg>
+          </args>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>Nexus-releases</id>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <url>http://mvn.sz.haizhi.com/nexus/content/repositories/releases/</url>
+    </repository>
+    <repository>
+      <id>Nexus-central</id>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <url>http://mvn.sz.haizhi.com/nexus/content/repositories/central/</url>
+    </repository>
+    <repository>
+      <id>aliyun</id>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>Nexus-thirdparty</id>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <url>http://mvn.sz.haizhi.com/nexus/content/repositories/thirdparty/</url>
+    </repository>
+    <repository>
+      <id>Nexus-snapshot</id>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <url>http://mvn.sz.haizhi.com/nexus/content/repositories/snapshots/</url>
+    </repository>
+    <repository>
+      <id>cloudera.repos</id>
+      <url>https://repository.cloudera.com/content/groups/cdh-releases-rcs</url>
+      <name>Cloudera Public Repositories</name>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>cloudera.snapshots.repo</id>
+      <url>https://repository.cloudera.com/content/repositories/snapshots</url>
+      <name>Cloudera Snapshots Repository</name>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+    <repository>
+      <id>cloudera.public.repo</id>
+      <url>https://repository.cloudera.com/artifactory/public</url>
+    </repository>
+  </repositories>
+</project>
