@@ -55,7 +55,7 @@
                             </descriptors>
                             <appendAssemblyId>false</appendAssemblyId>
                             <outputDirectory>
-                                ${user.dir}${file.separator}build${file.separator}release${file.separator}alg
+                                ${user.dir}${file.separator}build${file.separator}release${file.separator}flink
                             </outputDirectory>
                         </configuration>
                         <executions>
