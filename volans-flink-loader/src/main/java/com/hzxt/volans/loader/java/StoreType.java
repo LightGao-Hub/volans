@@ -1,4 +1,4 @@
-package com.haizhi.volans.loader.scala.config.streaming;
+package com.hzxt.volans.loader.java;
 
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;

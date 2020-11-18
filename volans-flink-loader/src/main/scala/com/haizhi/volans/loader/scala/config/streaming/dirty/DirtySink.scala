@@ -4,7 +4,8 @@ import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.check.CheckHelper
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.Parameter
-import com.haizhi.volans.loader.scala.config.streaming.{Check, StoreType}
+import com.haizhi.volans.loader.scala.config.streaming.Check
+import com.hzxt.volans.loader.java.StoreType
 
 /**
  * 脏数据处理sink

@@ -2,7 +2,8 @@ package com.haizhi.volans.loader.scala.config.streaming.error
 
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
-import com.haizhi.volans.loader.scala.config.streaming.{Check, StoreType}
+import com.haizhi.volans.loader.scala.config.streaming.Check
+import com.hzxt.volans.loader.java.StoreType
 
 /**
  * 异常信息sink

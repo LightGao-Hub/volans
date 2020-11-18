@@ -10,13 +10,14 @@ import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.Parameter
 import com.haizhi.volans.loader.scala.config.schema.{Keys, SchemaVo}
-import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StoreType, StreamingConfig}
+import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
 import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
 import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
 import com.haizhi.volans.loader.scala.config.streaming.flink.FlinkConfig
 import com.haizhi.volans.loader.scala.config.streaming.sink.Sinks
 import com.haizhi.volans.loader.scala.config.streaming.source.KafkaSourceConfig
 import com.haizhi.volans.loader.scala.util.HDFSUtils
+import com.hzxt.volans.loader.java.StoreType
 import org.apache.commons.collections.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
@@ -32,11 +33,11 @@ object StreamingConfigHelper {
    *
    * @param inputParam args[]
    */
-  def parse(inputParam: Array[String]): StreamingConfig = {
-    if (null == inputParam || inputParam.length == 0) {
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} inputParam args[] 参数有误")
+  def parse(inputParam: String): StreamingConfig = {
+    if (StringUtils.isBlank(inputParam)) {
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} -input 参数为空，请输入正确路径")
     }
-    val content: String = downloadParamIfNecessary(inputParam(0))
+    val content: String = downloadParamIfNecessary(inputParam)
     if (StringUtils.isBlank(content))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} inputParam args[] 参数类型有误， 无法获取全局参数")
     LOG.info("SparkArgs：" + content)

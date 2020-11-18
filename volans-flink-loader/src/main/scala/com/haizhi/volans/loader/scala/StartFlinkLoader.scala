@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import config.check.{StreamingConfigHelper, StreamingExecutorHelper}
-import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StoreType, StreamingConfig}
+import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
 import com.haizhi.volans.loader.scala.executor.{ErrorExecutor, FileExecutor, StreamingExecutor}
 import com.haizhi.volans.loader.scala.operator.KeyedStateFunction
 import config.schema.Keys
@@ -23,9 +23,8 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.{OutputFileConfi
 import org.apache.flink.streaming.api.scala.{DataStream, OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
-import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.{Logger, LoggerFactory}
-
+import org.apache.flink.api.java.utils.ParameterTool
 import scala.util.Random
 
 object StartFlinkLoader {
@@ -161,8 +160,6 @@ object StartFlinkLoader {
     val properties: Properties = new Properties()
     properties.setProperty("bootstrap.servers", streamingConfig.kafkSource.servers)
     properties.setProperty("group.id", streamingConfig.kafkSource.groupId)
-    properties.setProperty("key.deserializer", classOf[StringDeserializer].getCanonicalName)
-    properties.setProperty("value.deserializer", classOf[StringDeserializer].getCanonicalName)
     properties.setProperty("session.timeout.ms", "60000")
 
     //connect Kafka, 可支持kafka >= 1.0.0
@@ -172,7 +169,8 @@ object StartFlinkLoader {
       , properties
     )
     //设置从最早处消费，如果从savepoint处恢复则设置无效
-    myConsumer.setStartFromEarliest()
+    //myConsumer.setStartFromEarliest()
+    myConsumer.setStartFromLatest()
     myConsumer
   }
 
@@ -183,10 +181,11 @@ object StartFlinkLoader {
     logger.info("=========================================================================")
     logger.info("===================Flink Streaming Application Start================")
     logger.info("=========================================================================")
-
-    val args: Array[String] = Array("/Users/hzxt/project/IDEA_HZXT/volans-flink/volans/volans-flink-loader/src/main/resources/conf/参数配置.json")
+    val parameter = ParameterTool.fromArgs(args)
+    val path = parameter.get("input", null)
+    //val args: Array[String] = Array("/Users/hzxt/project/IDEA_HZXT/volans-flink/volans/volans-flink-loader/src/main/resources/conf/参数配置.json")
     //加载全局参数
-    streamingConfig = StreamingConfigHelper.parse(args)
+    streamingConfig = StreamingConfigHelper.parse(path)
     //构建streamingExecutor
     streamingExecutor = StreamingExecutorHelper.buildExecutors(streamingConfig)
     errorExecutor = streamingExecutor.errorExecutor

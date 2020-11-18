@@ -1,8 +1,13 @@
 package com.haizhi.volans.loader.scala.operator
 
+import java.{lang, util}
+
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
+import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
+import com.haizhi.volans.loader.scala.config.check.CheckValueConversion
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.Parameter
+import com.haizhi.volans.loader.scala.config.schema.SchemaFieldVo
 import com.haizhi.volans.loader.scala.config.streaming.StreamingConfig
 import org.apache.flink.api.common.state.{ListState, ListStateDescriptor, ValueState, ValueStateDescriptor}
 import org.apache.flink.api.scala._
@@ -30,6 +35,8 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
   //不同分区下的度量集合
   private val counter_consume_list: ArrayBuffer[Counter] = ArrayBuffer[Counter]()
   private val counter_dirty_list: ArrayBuffer[Counter] = ArrayBuffer[Counter]()
+  //数据检查和转换类
+  private val check = CheckValueConversion(streamingConfig)
 
   // 不同key分区下的消费数量
   lazy val consumeCount: ValueState[Long] =
@@ -60,6 +67,7 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
     new OutputTag[String]("dirty-out")
 
   override def open(parameters: Configuration): Unit = {
+    logger.info("走 open 函数")
     for (key <- 0 until streamingConfig.flinkConfig.parallelism) {
       val counter_consumeCount = getRuntimeContext
         .getMetricGroup
@@ -93,37 +101,12 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
     if (consumeCount.value() > consume_counter.getCount)
       consume_counter.inc(consumeCount.value() - consume_counter.getCount)
 
-    //数据校验及转换
-    val tuple: (String, Boolean) = checkValue(value._1)
-    //脏数据和正确数据放入不同State
-    if (!tuple._2) {
-      //打印脏数据
-      logger.info(s"打印脏数据 key =${value._2} , dirtyData = ${tuple._1}")
-      //脏数据累加
-      dirtyCount.update(dirtyCount.value() + 1)
-      //度量累加
-      dirty_counter.inc()
-
-      //如果脏数据设置errorMode模式>=0 且脏数据个数大于规定则程序结束
-      if (streamingConfig.dirtySink.errorMode >= 0 &&
-        (dirtyCount.value() * streamingConfig.flinkConfig.parallelism > streamingConfig.dirtySink.errorMode))
-        throw new VolansCheckException(s"${ErrorCode.DIRTY_COUNT_ERROR}${ErrorCode.PATH_BREAK}  " +
-          s"脏数据超出 errorMode [${streamingConfig.dirtySink.errorMode}] 限制")
-
-      //开启脏数据记录 且 脏数据量小于errorStoreRowsLimit，将脏数据输出
-      if (streamingConfig.dirtySink.errorStoreEnabled && (dirtyCount.value() * streamingConfig.flinkConfig.parallelism) <=
-        streamingConfig.dirtySink.errorStoreRowsLimit)
-        ctx.output(freezingAlarmOutput, tuple._1)
-
-      logger.info(s"打印：key = ${value._2}, 度量脏数据总量 = ${dirty_counter.getCount}")
-    } else
-      dataList.add(tuple._1)
-
+    dataList.add(value._1)
     //消费数量累加
     consumeCount.update(consumeCount.value() + 1)
     //度量累加
     consume_counter.inc()
-    logger.info(s"打印：key = ${value._2}, 度量总量 = ${consume_counter.getCount}")
+    logger.info(s"打印：key = ${value._2}, 度量总量 = ${consume_counter.getCount}, 脏数据总量 = ${dirty_counter.getCount}")
   }
 
   //触发计时器
@@ -131,28 +114,40 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
                        ctx: KeyedProcessFunction[Int, (String, Int), Iterable[String]]#OnTimerContext,
                        out: Collector[Iterable[String]]): Unit = {
     //通过计时器将缓存数据输出
-    logger.info(s" onTimer dataList = ${dataList.get()}")
+    logger.info(s" onTimer check start dataList = ${dataList.get()}")
+    val iterable: lang.Iterable[String] = dataList.get()
+    val iter: util.Iterator[String] = iterable.iterator()
+    while (iter.hasNext) {
+      val value: String = iter.next()
+      //数据校验及转换
+      val tuple: (String, Boolean) = check.checkValue(value)
+      //脏数据和正确数据放入不同State
+      if (!tuple._2) {
+        //打印脏数据
+        logger.info(s"打印脏数据 key =${tuple._2} , dirtyData = ${tuple._1}")
+        //脏数据累加
+        dirtyCount.update(dirtyCount.value() + 1)
+        //开启脏数据记录 且 脏数据量小于errorStoreRowsLimit，将脏数据输出
+        if (streamingConfig.dirtySink.errorStoreEnabled && (dirtyCount.value() * streamingConfig.flinkConfig.parallelism) <=
+          streamingConfig.dirtySink.errorStoreRowsLimit)
+          ctx.output(freezingAlarmOutput, tuple._1)
+        //然后将脏数据删除
+        iter.remove()
+      }
+    }
+    logger.info(s" onTimer check end dataList = ${iterable}")
     //输出正确数据
-    out.collect(dataList.get().asScala)
+    out.collect(iterable.asScala)
     //清空数据并将flag改为false，重新触发计时器
     dataList.clear()
     flagTime.update(false)
+    //如果脏数据设置errorMode模式>=0 且脏数据个数大于规定则程序结束
+    if (streamingConfig.dirtySink.errorMode >= 0 &&
+      (dirtyCount.value() * streamingConfig.flinkConfig.parallelism > streamingConfig.dirtySink.errorMode))
+      throw new VolansCheckException(s"${ErrorCode.DIRTY_COUNT_ERROR}${ErrorCode.PATH_BREAK}  " +
+        s"脏数据超出 errorMode [${streamingConfig.dirtySink.errorMode}] 限制")
   }
 
-  //检验脏数据,false为脏数据
-  def checkValue(value: String): (String, Boolean) = {
-    if (value.startsWith("checkFalse")) {
-      value -> false
-    } else
-      typeConversion(value)
-  }
 
-  //类型转换,false为转换异常
-  def typeConversion(value: String): (String, Boolean) = {
-    if (value.startsWith("typeFalse")) {
-      value -> false
-    } else
-      value -> true
-  }
 
 }

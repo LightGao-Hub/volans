@@ -1,13 +1,14 @@
 package com.haizhi.volans.loader.scala.config.check
 
 import java.util
+
 import com.google.gson.reflect.TypeToken
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.{Parameter, SinksParameter}
 import com.haizhi.volans.loader.scala.config.schema.Keys
-import com.haizhi.volans.loader.scala.config.streaming.StoreType
+import com.hzxt.volans.loader.java.StoreType
 import org.apache.commons.collections.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory

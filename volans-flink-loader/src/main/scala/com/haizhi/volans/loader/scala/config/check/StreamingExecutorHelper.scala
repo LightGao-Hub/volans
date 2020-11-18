@@ -3,9 +3,10 @@ package com.haizhi.volans.loader.scala.config.check
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
-import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StoreType, StreamingConfig}
+import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
 import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
 import com.haizhi.volans.loader.scala.executor.{DirtyExecutor, ErrorExecutor, FileExecutor, StreamingExecutor}
+import com.hzxt.volans.loader.java.StoreType
 import org.slf4j.{Logger, LoggerFactory}
 
 /**
