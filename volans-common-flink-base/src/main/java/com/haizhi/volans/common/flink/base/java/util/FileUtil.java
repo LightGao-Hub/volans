@@ -109,10 +109,17 @@ public class FileUtil {
         if (exists(path)) {
             if(path.startsWith("file:///"))
                 return FileUtils.readFileToString(new File(path.replace("file://", "")), encoding);
+            else if (path.startsWith("file:/"))
+                return FileUtils.readFileToString(new File(path.replace("file:", "")), encoding);
             else
                 return FileUtils.readFileToString(new File(path), encoding);
         }
         return null;
+    }
+
+    public static String readThisPath(String fileName) throws IOException {
+        File directory = new File(fileName);
+        return FileUtils.readFileToString(directory, "utf-8");
     }
 
     /**
@@ -124,6 +131,8 @@ public class FileUtil {
     public static boolean exists(String path) throws IOException {
         if(path.startsWith("file:///"))
             return new File(path.replace("file://", "")).exists();
+        else if (path.startsWith("file:/"))
+            return new File(path.replace("file:", "")).exists();
         else
             return new File(path).exists();
     }

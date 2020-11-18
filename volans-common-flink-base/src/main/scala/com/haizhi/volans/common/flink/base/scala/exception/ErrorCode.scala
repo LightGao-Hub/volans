@@ -2,6 +2,7 @@ package com.haizhi.volans.common.flink.base.scala.exception
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 
 /**
  * @author gl 
@@ -12,6 +13,7 @@ object ErrorCode {
   val PATH_BREAK = "##"
   val PARAMETER_CHECK_ERROR:String = "CHECK_ERROR"
   val STREAMING_ERROR:String = "STREAMING_ERROR"
+  val DIRTY_COUNT_ERROR:String = "DIRTY_COUNT_ERROR"
 
   /**
    *
