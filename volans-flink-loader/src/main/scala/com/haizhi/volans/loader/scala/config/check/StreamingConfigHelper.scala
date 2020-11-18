@@ -52,12 +52,14 @@ object StreamingConfigHelper {
   private def downloadParamIfNecessary(inputParamPath: String): String = {
     var content: String = null
     LOG.info(s"flink driver args: ${inputParamPath}")
-    if (inputParamPath.startsWith("/")) {
+    if (inputParamPath.startsWith("/") || inputParamPath.startsWith("file:///") || inputParamPath.startsWith("file:/")) {
       content = FileUtil.readFileToString(inputParamPath, "utf-8")
     } else if (inputParamPath.startsWith("{")) {
       content = inputParamPath
     } else if (inputParamPath.startsWith("hdfs://")) {
       content = HDFSUtils.readFileContent(inputParamPath)
+    } else {
+      content = FileUtil.readThisPath(inputParamPath)
     }
     content
   }
