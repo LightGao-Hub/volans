@@ -1,0 +1,171 @@
+{
+  "source": {
+    "storeType":"kafka",
+    "servers": "localhost:9092",
+    "groupId": "grouoId02",
+    "topic": "flink_topic"
+  },
+  "sinks": [
+    {
+      "storeType": "GDB",
+      "storeConfig": {
+        "database": "benchmark",
+        "collection": "company",
+        "collectionType": "vertex",
+        "maxConnections": 5,
+        "numberOfShards": 9,
+        "password": "dmp_manager@2019",
+        "replicationFactor": 1,
+        "url": "192.168.1.204:8529",
+        "user": "dmp_manager"
+      }
+    },
+    {
+      "storeType": "JANUS",
+      "storeConfig": {
+        "database": "DMC_test001",
+        "graphElement": "vertex",
+        "backingIndex": "search",
+        "importBatchSize": "200",
+        "label": "Company11",
+        "graph": {
+          "storage.backend": "hbase",
+          "index.search.hostname": "192.168.1.208",
+          "gremlin.graph": "org.janusgraph.core.JanusGraphFactory",
+          "storage.hostname": "192.168.1.131",
+          "index.search.port": 9200,
+          "storage.hbase.ext.hbase.zookeeper.property.clientPort": 2181,
+          "storage.hbase.table": "DMC_test001",
+          "index.search.backend": "elasticsearch"
+        }
+      }
+    },
+    {
+      "storeType": "HBASE",
+      "storeConfig": {
+        "url": "192.168.1.131,192.168.1.132,192.168.1.134:2181",
+        "namespace": "benchmark",
+        "table": "company",
+        "logicPartitions": 1000,
+        "physicsPartitions": 16,
+        "config": {
+          
+        }
+      }
+    },
+    {
+      "storeType": "ES",
+      "storeConfig": {
+        "index": "benchmark.company",
+        "type": "company",
+        "url": "192.168.2.71:9200",
+        "mapping": {
+          "dynamic_date_formats": [
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd"
+          ],
+          "dynamic_templates": [
+            {
+              "strings": {
+                "mapping": {
+                  "analyzer": "ik",
+                  "type": "text",
+                  "fields": {
+                    "keyword": {
+                      "normalizer": "my_normalizer",
+                      "type": "keyword"
+                    }
+                  }
+                },
+                "match_mapping_type": "string"
+              }
+            }
+          ],
+          "_all": {
+            "enabled": false
+          },
+          "date_detection": true
+        },
+        "setting": {
+          "analysis": {
+            "normalizer": {
+              "my_normalizer": {
+                "filter": [
+                  "lowercase",
+                  "asciifolding"
+                ],
+                "char_filter": [
+                  
+                ],
+                "type": "custom"
+              }
+            },
+            "analyzer": {
+              "ik": {
+                "type": "custom",
+                "tokenizer": "ik_max_word"
+              }
+            }
+          },
+          "index.number_of_replicas": 1,
+          "index.number_of_shards": 5
+        }
+      }
+    }
+  ],
+  "schema": {
+    "fields": {
+      "from_key": {
+        "isMain": "N",
+        "name": "from_key",
+        "type": "STRING"
+      },
+      "to_key": {
+        "isMain": "N",
+        "name": "to_key",
+        "type": "STRING"
+      },
+      "business_status": {
+        "isMain": "Y",
+        "name": "business_status",
+        "type": "DOUBLE"
+      },
+      "address": {
+        "isMain": "N",
+        "name": "address",
+        "type": "LONG"
+      },
+      "object_key": {
+        "isMain": "N",
+        "name": "object_key",
+        "type": "STRING"
+      }
+    },
+    "name": "com_new_vertex_tv_user_shanghai_1",
+    "type": "edge"
+  },
+  "dirtySink": {
+    "storeType": "file",
+    "errorMode": -1,
+    "errorStoreEnabled": true,
+    "errorStoreRowsLimit": 30000,
+    "inboundTaskId": "7083-HBASE",
+    "taskInstanceId": "7083",
+    "dirtyConfig": {
+      "path": "file:///Users/hzxt/bigdata/flink-1.11.0/volans/groupId/dirty"
+    }
+  },
+  "errorSink": {
+      "storeType": "file",
+      "errorConfig": {
+        "path": "file:///Users/hzxt/bigdata/flink-1.11.0/volans/groupId/taskInstanceId/error.log"
+      }
+  },
+  "checkPoint" : "file:///Users/hzxt/bigdata/flink-1.11.0/volans/checkpoints/gourpId",
+  "flinkConfig": {
+    "parallelism": 3,
+    "checkpointInterval": 10000,
+    "batchInterval": 10000,
+    "restart": 3
+  }
+}
