@@ -26,10 +26,10 @@
         </fileSet>
         <fileSet>
             <directory>${project.basedir}</directory>
-            <outputDirectory>${file.separator}bin</outputDirectory>
+            <outputDirectory>${file.separator}</outputDirectory>
             <includes>
                 <include>*.bat</include>
-                <include>*.sh</include>
+                <include>bin/*.sh</include>
             </includes>
             <fileMode>0755</fileMode>
         </fileSet>
