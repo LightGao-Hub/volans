@@ -11,6 +11,7 @@
   <modules>
     <module>volans-common-flink-base</module>
     <module>volans-flink-loader</module>
+    <module>volans-flink-sink</module>
   </modules>
 
   <name>volans</name>
@@ -24,10 +25,12 @@
     <scala.prefix>2.11</scala.prefix>
     <flink.version>1.11.0</flink.version>
     <hbase.version>1.2.0</hbase.version>
+    <hive.version>1.1.0</hive.version>
     <elasticsearch.version>6.4.2</elasticsearch.version>
     <tinkerpop.version>3.4.4</tinkerpop.version>
     <janusgraph.version>0.4.1</janusgraph.version>
     <janusgraph.hbase1.version>0.4.1_hbase1</janusgraph.hbase1.version>
+    <arangodb.version>4.4.0</arangodb.version>
     <volans.version>1.0.0</volans.version>
     <scope.version>provided</scope.version>
   </properties>
