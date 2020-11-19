@@ -1,11 +1,11 @@
-package com.haizhi.volans.sink.sinks
+package com.haizhi.volans.sink.component
 
 import java.util
 
 import com.google.gson.Gson
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.StoreEsConfig
-import com.haizhi.volans.sink.constant.{CoreConstants, Keys, StoreType}
+import com.haizhi.volans.sink.config.store.StoreEsConfig
+import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
 import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.apache.flink.streaming.connectors.elasticsearch.{ActionRequestFailureHandler, ElasticsearchSinkFunction, RequestIndexer}

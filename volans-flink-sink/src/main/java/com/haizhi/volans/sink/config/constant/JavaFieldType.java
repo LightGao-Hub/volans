@@ -1,4 +1,4 @@
-package com.haizhi.volans.sink.constant;
+package com.haizhi.volans.sink.config.constant;
 
 import com.haizhi.volans.sink.utils.DateUtils;
 import org.apache.commons.lang3.StringUtils;

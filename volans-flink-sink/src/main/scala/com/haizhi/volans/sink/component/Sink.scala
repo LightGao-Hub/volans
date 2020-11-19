@@ -1,6 +1,6 @@
-package com.haizhi.volans.sink.sinks
+package com.haizhi.volans.sink.component
 
-import com.haizhi.volans.sink.constant.StoreType
+import com.haizhi.volans.sink.config.constant.StoreType
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 
 /**

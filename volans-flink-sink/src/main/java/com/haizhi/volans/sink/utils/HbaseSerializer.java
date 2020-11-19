@@ -2,7 +2,7 @@ package com.haizhi.volans.sink.utils;
 
 import com.google.gson.reflect.TypeToken;
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils;
-import com.haizhi.volans.sink.constant.JavaFieldType;
+import com.haizhi.volans.sink.config.constant.JavaFieldType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.*;
 import scala.collection.mutable.WrappedArray;

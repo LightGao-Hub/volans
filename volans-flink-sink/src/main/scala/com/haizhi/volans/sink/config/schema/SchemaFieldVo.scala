@@ -1,6 +1,6 @@
-package com.haizhi.volans.sink.schema
+package com.haizhi.volans.sink.config.schema
 
-import com.haizhi.volans.sink.constant.Keys
+import com.haizhi.volans.sink.config.constant.Keys
 import org.apache.commons.lang3.StringUtils
 
 /**

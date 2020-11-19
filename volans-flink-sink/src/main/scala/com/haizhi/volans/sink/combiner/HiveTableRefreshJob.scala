@@ -1,4 +1,4 @@
-package com.haizhi.volans.sink.sinks
+package com.haizhi.volans.sink.combiner
 
 import com.haizhi.volans.sink.server.HiveJDBC
 import org.slf4j.{Logger, LoggerFactory}

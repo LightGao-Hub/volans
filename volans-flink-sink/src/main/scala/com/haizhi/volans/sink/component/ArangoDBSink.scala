@@ -1,14 +1,14 @@
-package com.flink.sink
+package com.flink.sink.sinks
 
 import java.util
 
 import com.arangodb.model.DocumentImportOptions
 import com.arangodb.model.DocumentImportOptions.OnDuplicate
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.StoreAtlasConfig
-import com.haizhi.volans.sink.constant.{CoreConstants, Keys, StoreType}
+import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
 import com.haizhi.volans.sink.server.AtlasDao
-import com.haizhi.volans.sink.sinks.Sink
+import com.haizhi.volans.sink.component.Sink
+import com.haizhi.volans.sink.config.store.StoreAtlasConfig
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
 import org.slf4j.LoggerFactory

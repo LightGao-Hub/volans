@@ -1,9 +1,9 @@
-package com.haizhi.volans.sink.sinks
+package com.haizhi.volans.sink.component
 
 import java.util.concurrent.TimeUnit
 
-import com.haizhi.volans.sink.config.StoreHiveConfig
-import com.haizhi.volans.sink.constant.StoreType
+import com.haizhi.volans.sink.config.store.StoreHiveConfig
+import com.haizhi.volans.sink.config.constant.StoreType
 import org.apache.flink.api.common.serialization.SimpleStringEncoder
 import org.apache.flink.core.fs.Path
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction

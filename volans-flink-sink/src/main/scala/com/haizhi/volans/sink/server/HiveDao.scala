@@ -2,7 +2,7 @@ package com.haizhi.volans.sink.server
 
 import java.util.Date
 
-import com.haizhi.volans.sink.constant.HiveStoreType
+import com.haizhi.volans.sink.config.constant.HiveStoreType
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient

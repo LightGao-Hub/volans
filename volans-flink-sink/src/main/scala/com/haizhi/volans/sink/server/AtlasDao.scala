@@ -6,9 +6,9 @@ import java.util.Objects
 import com.arangodb.entity.{CollectionType, IndexEntity, LoadBalancingStrategy}
 import com.arangodb.model._
 import com.arangodb.{ArangoCollection, ArangoDB, ArangoDBException, ArangoDatabase}
-import com.haizhi.volans.sink.config.StoreAtlasConfig
-import com.haizhi.volans.sink.constant.IndexTypeEnum.IndexTypeEnum
-import com.haizhi.volans.sink.constant.{IndexTypeEnum, Keys}
+import com.haizhi.volans.sink.config.store.StoreAtlasConfig
+import com.haizhi.volans.sink.config.constant.IndexTypeEnum.IndexTypeEnum
+import com.haizhi.volans.sink.config.constant.{IndexTypeEnum, Keys}
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 

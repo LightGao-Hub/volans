@@ -1,4 +1,4 @@
-package com.haizhi.volans.sink.key
+package com.haizhi.volans.sink.config.key
 
 import java.text.NumberFormat
 

@@ -1,4 +1,4 @@
-package com.haizhi.volans.sink.constant;
+package com.haizhi.volans.sink.config.constant;
 
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;

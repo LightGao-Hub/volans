@@ -2,8 +2,8 @@ package com.haizhi.volans.sink.combiner
 
 import java.util.Date
 
-import com.haizhi.volans.sink.config.StoreHiveConfig
-import com.haizhi.volans.sink.constant.HiveStoreType
+import com.haizhi.volans.sink.config.store.StoreHiveConfig
+import com.haizhi.volans.sink.config.constant.HiveStoreType
 import com.haizhi.volans.sink.server.HiveDao
 import com.haizhi.volans.sink.util.HDFSUtils
 import com.haizhi.volans.sink.utils.DateUtils

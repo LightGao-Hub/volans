@@ -4,7 +4,7 @@ import java.io.IOException
 import java.util
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.StoreEsConfig
+import com.haizhi.volans.sink.config.store.StoreEsConfig
 import org.apache.http.entity.ContentType
 import org.apache.http.nio.entity.NStringEntity
 import org.apache.http.{Header, HttpEntity, HttpHost}

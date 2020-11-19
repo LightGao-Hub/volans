@@ -4,9 +4,9 @@ import java.io.{Closeable, IOException}
 import java.util
 
 import com.google.gson.{JsonObject, JsonPrimitive}
-import com.haizhi.volans.sink.config.StoreHBaseConfig
-import com.haizhi.volans.sink.constant.{Keys, StoreType}
-import com.haizhi.volans.sink.key.RowKeyPartitioner
+import com.haizhi.volans.sink.config.store.StoreHBaseConfig
+import com.haizhi.volans.sink.config.constant.{Keys, StoreType}
+import com.haizhi.volans.sink.config.key.RowKeyPartitioner
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase._
 import org.apache.hadoop.hbase.client._

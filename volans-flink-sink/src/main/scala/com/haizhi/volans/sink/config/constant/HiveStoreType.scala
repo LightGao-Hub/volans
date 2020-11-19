@@ -1,4 +1,4 @@
-package com.haizhi.volans.sink.constant
+package com.haizhi.volans.sink.config.constant
 
 /**
  * Author pengxb

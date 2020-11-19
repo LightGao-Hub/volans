@@ -1,6 +1,6 @@
 package com.haizhi.volans.sink.utils;
 
-import com.haizhi.volans.sink.constant.EncryptionType;
+import com.haizhi.volans.sink.config.constant.EncryptionType;
 import org.apache.commons.lang3.StringUtils;
 
 /**
