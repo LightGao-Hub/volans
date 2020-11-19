@@ -39,7 +39,7 @@ object StreamingConfigHelper {
     }
     val content: String = downloadParamIfNecessary(inputParam)
     if (StringUtils.isBlank(content))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} inputParam args[] 参数类型有误， 无法获取全局参数")
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} inputParam args[] 获取参数数据为空，无法获取全局参数")
     LOG.info("SparkArgs：" + content)
     doParse(content)
   }

@@ -5,6 +5,7 @@ import java.util
 
 import com.google.gson.reflect.TypeToken
 import com.google.gson.{Gson, GsonBuilder, JsonObject}
+import com.haizhi.volans.common.flink.base.java.util.MapTypeAdapter
 
 import scala.collection.{JavaConverters, mutable}
 

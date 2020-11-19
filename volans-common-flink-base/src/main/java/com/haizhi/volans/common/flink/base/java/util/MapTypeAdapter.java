@@ -1,4 +1,4 @@
-package com.haizhi.volans.common.flink.base.scala.util;
+package com.haizhi.volans.common.flink.base.java.util;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.internal.LinkedTreeMap;

@@ -1,7 +1,6 @@
 package com.haizhi.volans.loader.scala.config.check
 
 import java.util
-
 import com.google.gson.reflect.TypeToken
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
@@ -13,7 +12,6 @@ import org.apache.commons.collections.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
-
 import scala.collection.mutable
 
 /**

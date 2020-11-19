@@ -2,7 +2,6 @@ package com.haizhi.volans.loader.scala
 
 import java.util.Properties
 import java.util.concurrent.TimeUnit
-
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import config.check.{StreamingConfigHelper, StreamingExecutorHelper}
@@ -48,7 +47,7 @@ object StartFlinkLoader {
       val stream: DataStream[Iterable[String]] = env
         .addSource(getKafkaSource)
         .uid("source-id")
-        .map(_ -> Random.nextInt(parallelism))
+        .map(_ -> Random.nextInt(parallelism).toString)
         .uid("map-id")
         .keyBy(_._2)
         .process(new KeyedStateFunction(streamingConfig))
@@ -59,7 +58,7 @@ object StartFlinkLoader {
         logger.info(" open errorStoreEnabled is true ")
         stream
           .getSideOutput(new OutputTag[String]("dirty-out"))
-          .addSink(getDirtySink)
+          .addSink(getDirtySink).setParallelism(1)
           .uid("dirtySink")
       }
 
@@ -86,7 +85,7 @@ object StartFlinkLoader {
   }
 
   /**
-   * 设置脏数据输出FileSink，将在以下三个条件之一生成桶中新文件
+   * 设置脏数据输出FileSink
    * 由于生产环境大部分hadoop版本 < 2.7 所以使用 OnCheckpointRollingPolicy 滚动策略
    * 默认滚动和checkpoint时间保持一致
    *
@@ -169,8 +168,7 @@ object StartFlinkLoader {
       , properties
     )
     //设置从最早处消费，如果从savepoint处恢复则设置无效
-    //myConsumer.setStartFromEarliest()
-    myConsumer.setStartFromLatest()
+    myConsumer.setStartFromEarliest()
     myConsumer
   }
 
@@ -183,7 +181,6 @@ object StartFlinkLoader {
     logger.info("=========================================================================")
     val parameter = ParameterTool.fromArgs(args)
     val path = parameter.get("input", null)
-    //val args: Array[String] = Array("/Users/hzxt/project/IDEA_HZXT/volans-flink/volans/volans-flink-loader/src/main/resources/conf/参数配置.json")
     //加载全局参数
     streamingConfig = StreamingConfigHelper.parse(path)
     //构建streamingExecutor
