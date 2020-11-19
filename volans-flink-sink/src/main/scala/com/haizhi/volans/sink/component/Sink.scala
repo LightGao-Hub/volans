@@ -9,6 +9,9 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
  */
 trait Sink{
 
+  // Sink标识
+  var uid: String
+
   var storeType: StoreType
 
   def build[T](v: T): RichSinkFunction[T]

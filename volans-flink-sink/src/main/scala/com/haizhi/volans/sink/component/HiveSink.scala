@@ -12,15 +12,17 @@ import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.
 import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.DefaultRollingPolicy
 import org.slf4j.LoggerFactory
 
-
 /**
  * Author pengxb
  * Date 2020/11/16
  */
-class HiveSink(override var storeType: StoreType, var storeConfig: StoreHiveConfig)
+class HiveSink(override var storeType: StoreType,
+               var storeConfig: StoreHiveConfig)
   extends Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[HiveSink])
+
+  override var uid: String = "Hive"
 
   // Todo
   private def buildHiveSink: StreamingFileSink[String] = {

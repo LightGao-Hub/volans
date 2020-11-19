@@ -22,10 +22,14 @@ import scala.collection.JavaConverters.seqAsJavaListConverter
  * Author pengxb
  * Date 2020/11/16
  */
-class HbaseSink(override var storeType: StoreType, var storeConfig: StoreHBaseConfig, var schemaVo: SchemaVo)
+class HbaseSink(override var storeType: StoreType,
+                var storeConfig: StoreHBaseConfig,
+                var schemaVo: SchemaVo)
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[HbaseSink])
+
+  override var uid: String = "Hbase"
   private val hbaseDao: HBaseDao = new HBaseDao()
   private var fieldTypeMap: Map[String, JavaFieldType] = _
 

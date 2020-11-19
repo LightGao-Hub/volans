@@ -26,18 +26,21 @@ import org.slf4j.LoggerFactory
  * Author pengxb
  * Date 2020/11/18
  *
-  */
-class EsSink(override var storeType: StoreType, var storeConfig: StoreEsConfig)
+ */
+class EsSink(override var storeType: StoreType,
+             var storeConfig: StoreEsConfig)
   extends Sink with Serializable {
   /**
    * 需要实现序列化接口，否则会报错
    * The implementation of the provided ElasticsearchSinkFunction is not serializable. The object probably contains or references non-serializable fields
    */
-
   private val logger = LoggerFactory.getLogger(classOf[EsSink])
+
+  override var uid: String = "ES"
 
   /**
    * 构建ES Sink
+   *
    * @return
    */
   def buildEsSink: RichSinkFunction[Iterable[String]] = {
@@ -114,6 +117,7 @@ class EsSink(override var storeType: StoreType, var storeConfig: StoreEsConfig)
 
   /**
    * 参数校验、转换
+   *
    * @param element
    */
   def validateAndMerge(element: util.Map[String, Object]): Unit = {

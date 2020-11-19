@@ -17,15 +17,19 @@ import org.slf4j.LoggerFactory
  * Author pengxb
  * Date 2020/11/16
  */
-class ArangoDBSink(override var storeType: StoreType,var storeConfig: StoreAtlasConfig)
+class ArangoDBSink(override var storeType: StoreType,
+                   var storeConfig: StoreAtlasConfig)
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[ArangoDBSink])
+
+  override var uid: String = "ArangoDB"
 
   private val atlasDao = new AtlasDao()
 
   /**
    * 初始化
+   *
    * @param parameters
    */
   override def open(parameters: Configuration): Unit = {
@@ -35,6 +39,7 @@ class ArangoDBSink(override var storeType: StoreType,var storeConfig: StoreAtlas
 
   /**
    * 处理数据
+   *
    * @param elements
    * @param context
    */
@@ -85,7 +90,7 @@ class ArangoDBSink(override var storeType: StoreType,var storeConfig: StoreAtlas
     }
   }
 
-  override def build[T](v:T): RichSinkFunction[T] = {
+  override def build[T](v: T): RichSinkFunction[T] = {
     this.asInstanceOf[RichSinkFunction[T]]
   }
 
