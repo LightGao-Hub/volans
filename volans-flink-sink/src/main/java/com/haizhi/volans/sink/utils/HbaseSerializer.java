@@ -46,9 +46,9 @@ public class HbaseSerializer {
             case UNKNOWN:
                 return Bytes.toBytes(String.valueOf(t));
             case LONG:
-                return Bytes.toBytes((Long) t);
+                return Bytes.toBytes(Long.parseLong(String.valueOf(t)));
             case DOUBLE:
-                return Bytes.toBytes((Double) t);
+                return Bytes.toBytes(Double.parseDouble(String.valueOf(t)));
             case DATETIME:
                 long value;
                 if (t instanceof Date) {
