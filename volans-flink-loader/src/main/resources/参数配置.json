@@ -8,7 +8,7 @@
     "inboundTaskId": "7083-HBASE",
     "taskInstanceId": "7083",
     "dirtyConfig": {
-      "path": "file:///Users/hzxt/bigdata/flink-1.11.0/volans/groupId/dirty"
+      "path": "hdfs://localhost:9000/volans/groupId/dirty"
     }
   },
   "errorSink": {
@@ -56,14 +56,14 @@
   },
   "sinks": [
     {
-      "storeType": "HBASE",
-      "storeConfig": {
-        "url": "192.168.1.131,192.168.1.132,192.168.1.134:2181",
-        "namespace": "benchmark",
-        "table": "company",
-        "logicPartitions": 1000,
-        "physicsPartitions": 16,
-        "config": {
+      "storeType":"HBASE",
+      "storeConfig":{
+        "url":"192.168.1.131,192.168.1.132,192.168.1.134:2181",
+        "namespace":"default",
+        "table":"flink_test.person",
+        "logicPartitions":1000,
+        "physicsPartitions":16,
+        "config":{
 
         }
       }
