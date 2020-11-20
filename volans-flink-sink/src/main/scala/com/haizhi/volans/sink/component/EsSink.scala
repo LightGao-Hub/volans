@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
  */
 class EsSink(override var storeType: StoreType,
              var storeConfig: StoreEsConfig)
-  extends Sink with Serializable {
+  extends Sink with java.io.Serializable {
   /**
    * 需要实现序列化接口，否则会报错
    * The implementation of the provided ElasticsearchSinkFunction is not serializable. The object probably contains or references non-serializable fields
