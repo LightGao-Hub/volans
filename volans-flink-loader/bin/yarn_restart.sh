@@ -9,6 +9,7 @@ extLibInfo=`find $LIB_HOME -type f -name *.jar | awk '{print "-C file://"$1}' | 
 # $1 保存点路径
 flink run \
 $extLibInfo \
+-yt $LIB_HOME \
 -s $1 \
 -m yarn-cluster \
 -p 3 \

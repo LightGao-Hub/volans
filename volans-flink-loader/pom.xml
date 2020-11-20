@@ -19,20 +19,28 @@
             <version>1.0.0</version>
         </dependency>
         <!--common end-->
+
+        <!-- flink kafka start -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-connector-kafka_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <!-- flink kafka end -->
+
+        <!-- sinks start -->
+        <dependency>
+            <groupId>com.haizhi</groupId>
+            <artifactId>volans-flink-sink</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        <!-- sinks end -->
 
     </dependencies>
     <profiles>
 
         <profile>
             <id>loder-deploy</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
             <build>
                 <plugins>
                     <plugin>

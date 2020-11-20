@@ -2,12 +2,14 @@ package com.haizhi.volans.loader.scala
 
 import java.util.Properties
 import java.util.concurrent.TimeUnit
+
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import config.check.{StreamingConfigHelper, StreamingExecutorHelper}
 import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
 import com.haizhi.volans.loader.scala.executor.{ErrorExecutor, FileExecutor, StreamingExecutor}
 import com.haizhi.volans.loader.scala.operator.KeyedStateFunction
+import com.haizhi.volans.sink.component._
 import config.schema.Keys
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.serialization.{SimpleStringEncoder, SimpleStringSchema}
@@ -24,6 +26,7 @@ import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.slf4j.{Logger, LoggerFactory}
 import org.apache.flink.api.java.utils.ParameterTool
+
 import scala.util.Random
 
 object StartFlinkLoader {
@@ -37,6 +40,8 @@ object StartFlinkLoader {
     try {
       // 加载参数
       initArgsExecutor(args)
+      //sinks参数解析
+      SinkContext.parseArgs(streamingConfig.sinks)
       // Flink上下文
       val env: StreamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment
       // 配置checkPoint
@@ -53,34 +58,32 @@ object StartFlinkLoader {
         .process(new KeyedStateFunction(streamingConfig))
         .uid("process-id")
 
-      //获取侧输出流并输出
-      if(streamingConfig.dirtySink.errorStoreEnabled) {
+      // 通过侧输出流获取脏数据并输出
+      if (streamingConfig.dirtySink.errorStoreEnabled) {
         logger.info(" open errorStoreEnabled is true ")
         stream
           .getSideOutput(new OutputTag[String]("dirty-out"))
           .addSink(getDirtySink).setParallelism(1)
-          .uid("dirtySink")
+          .uid("dirtySink-id")
       }
 
-      //获取正确数据流并输出
-      stream
-        .addSink(new OtherSinks)
-        .uid("otherSinks")
-
-      //hiveSink上游处理flatMap转换
-      /*stream
-        .flatMap(x=>x)
-        .addSink(getDirtySink)
-        .uid("hiveSink")*/
-
+      // 获取Sink列表, 循环增加sink
+      val sinksList: List[Sink] = SinkContext.getSinks()
+      sinksList.foreach(sink => {
+        if (sink.isInstanceOf[HiveSink]) {
+          stream.flatMap(_.toIterable).addSink(sink.build("")).uid("hiveSink-id")
+        } else {
+          val richSink = sink.build(Iterable(""))
+          stream.addSink(richSink)
+        }
+      })
       //执行程序
       env.execute()
     } catch {
-      case e: Exception => {
+      case e: Exception =>
         e.printStackTrace()
         doLogHappenError(e)
         throw e
-      }
     }
   }
 

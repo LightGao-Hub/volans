@@ -9,6 +9,7 @@ extLibInfo=`find $LIB_HOME -type f -name *.jar | awk '{print "-C file://"$1}' | 
 # 并行度虽然在全局参数中配置，但此处依然需要指定，因为会计算yarn 所需要的容器个数
 flink run \
 $extLibInfo \
+-yt $LIB_HOME \
 -m yarn-cluster \
 -p 3 \
 -yjm 1024m \
