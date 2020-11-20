@@ -53,7 +53,7 @@ class EsSink(override var storeType: StoreType,
         def process(elements: Iterable[String], ctx: RuntimeContext, indexer: RequestIndexer) {
           logger.debug("Elements: " + elements)
           elements.foreach(record => {
-            val element = JSONUtils.fromJson(record, classOf[util.Map[String, Object]])
+            val element = JSONUtils.jsonToJavaMap(record)
             validateAndMerge(element)
             val operation = element.get(Keys._OPERATION)
             if (operation != null) {

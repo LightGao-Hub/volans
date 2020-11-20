@@ -80,7 +80,7 @@ object SinkContext {
     } else if (storeType == StoreType.HBASE) {
       new HbaseSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHBaseConfig], schemaVo)
     } else if (storeType == StoreType.JANUS) {
-      //      new OutputJanusTask(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
+      new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
       null
     } else if (storeType == StoreType.HIVE) {
       new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig])
