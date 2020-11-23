@@ -6,15 +6,20 @@ import org.apache.commons.lang3.StringUtils
 /**
  * Create by zhoumingbing on 2020-08-06
  */
-case class StoreEsConfig(url: String,
+case class StoreEsConfig(url: String = null,
                          index: String = "test",
                          `type`: String = "test",
-                         idField: String,
-                         setting: java.util.Map[String, AnyRef],
-                         mapping: java.util.Map[String, AnyRef],
+                         idField: String = null,
+                         importBatchSize: Int = 2000,
                          encryptionType: String = "ORIGINAL",
-                         nativeConfig: java.util.Map[String, AnyRef],
-                         importBatchSize: Int = 3) extends StoreConfig {
+                         setting: java.util.Map[String, AnyRef] = null,
+                         mapping: java.util.Map[String, AnyRef] = null,
+                         nativeConfig: java.util.Map[String, AnyRef] = null
+                        ) extends StoreConfig {
+
+  def this() {
+    this(null)
+  }
 
   override def getGraph: String = {
     index

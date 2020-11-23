@@ -76,12 +76,11 @@ object SinkContext {
     if (storeType == StoreType.ATLAS || storeType == StoreType.GDB) {
       new ArangoDBSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreAtlasConfig])
     } else if (storeType == StoreType.ES) {
-      new EsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig])
+      new RestEsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig])
     } else if (storeType == StoreType.HBASE) {
       new HbaseSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHBaseConfig], schemaVo)
     } else if (storeType == StoreType.JANUS) {
       new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
-      null
     } else if (storeType == StoreType.HIVE) {
       new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig])
     } else {

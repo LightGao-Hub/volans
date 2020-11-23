@@ -4,9 +4,11 @@ import java.io.IOException
 import java.util
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
+import com.haizhi.volans.sink.config.constant.Keys
 import com.haizhi.volans.sink.config.store.StoreEsConfig
 import org.apache.http.entity.ContentType
 import org.apache.http.nio.entity.NStringEntity
+import org.apache.http.util.EntityUtils
 import org.apache.http.{Header, HttpEntity, HttpHost}
 import org.elasticsearch.client.{Response, ResponseException, RestClient}
 import org.slf4j.LoggerFactory
@@ -167,11 +169,10 @@ class EsDao extends Serializable {
   /**
    * bulk批量操作
    *
-   * @param esConfig
    * @param bulkRequest
    * @return
    */
-  def bulkOperation(esConfig: StoreEsConfig, bulkRequest: String): Response = {
+  def bulkOperation(bulkRequest: String): Response = {
     var response: Response = null
     try {
       val entity: HttpEntity = new NStringEntity(bulkRequest, ContentType.APPLICATION_JSON)
@@ -181,6 +182,86 @@ class EsDao extends Serializable {
         throw e
     }
     response
+  }
+
+  /**
+   * 批量删除
+   *
+   * @param documentIdList
+   * @param esConfig
+   */
+  def bulkDelete(documentIdList: List[String], esConfig: StoreEsConfig): Unit = {
+    var count = 1
+    val batchSize = esConfig.importBatchSize
+    val buffer = new StringBuilder()
+    // 拼接bulk request
+    for (documentId <- documentIdList) {
+      buffer.append("{\"delete\":{")
+        .append("\"_index\":\"")
+        .append(esConfig.index)
+        .append("\",\"_type\":\"")
+        .append(esConfig.`type`)
+        .append("\",\"_id\":\"")
+        .append(documentId)
+        .append("\"}}\n")
+      if (count % batchSize == 0) {
+        logger.info(s"bulkDelete Request: ${buffer.toString}")
+        val response = bulkOperation(buffer.toString())
+        if (response != null) {
+          logger.info(EntityUtils.toString(response.getEntity))
+        }
+        buffer.clear()
+      }
+      count = count + 1
+    }
+    if (buffer.size > 0) {
+      logger.info(s"bulkDelete Request: ${buffer.toString}")
+      val response = bulkOperation(buffer.toString())
+      if (response != null) {
+        logger.info(EntityUtils.toString(response.getEntity))
+      }
+    }
+  }
+
+  /**
+   * 批量更新
+   *
+   * @param documentList
+   * @param esConfig
+   */
+  def bulkUpsert(documentList: List[java.util.Map[String, Object]], esConfig: StoreEsConfig): Unit = {
+    var count = 1
+    val batchSize = esConfig.importBatchSize
+    val buffer = new StringBuilder()
+    // 拼接bulk request
+    for (documentMap <- documentList) {
+      buffer.append("{\"index\":{")
+        .append("\"_index\":\"")
+        .append(esConfig.index)
+        .append("\",\"_type\":\"")
+        .append(esConfig.`type`)
+        .append("\",\"_id\":\"")
+        .append(documentMap.get(Keys.OBJECT_KEY))
+        .append("\"}}\n")
+        .append(JSONUtils.toJson(documentMap))
+        .append("\n")
+      if (count % batchSize == 0) {
+        logger.info(s"bulkUpsert Request: ${buffer.toString}")
+        val response = bulkOperation(buffer.toString())
+        if (response != null) {
+          logger.info(EntityUtils.toString(response.getEntity))
+        }
+        buffer.clear()
+      }
+      count = count + 1
+    }
+    if (buffer.size > 0) {
+      logger.info(s"bulkUpsert Request: ${buffer.toString}")
+      val response = bulkOperation(buffer.toString())
+      if (response != null) {
+        logger.info(EntityUtils.toString(response.getEntity))
+      }
+    }
   }
 
   def createTableIfNecessary(esConfig: StoreEsConfig): Unit = {
