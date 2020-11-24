@@ -10,19 +10,10 @@ import org.apache.commons.lang3.StringUtils
  * @author gl 
  * @create 2020-11-02 17:17 
  */
-case class KafkaSourceConfig(storeType: StoreType,
-                             servers: String,
-                             groupId: String,
-                             topic: String) extends Check {
-  //初始化校验
-  check
-  /**
-   * source校验
-   *
-   * @return
-   */
-  override def check: Unit = {
-    if (StringUtils.isBlank(servers) || StringUtils.isBlank(topic))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  KafkaSourceConfig - servers/topic isEmpy")
-  }
+case class KafkaSourceConfig(servers: String,
+                             var groupId: String,
+                             topic: String,
+                             config: java.util.Map[String, Object] = null) {
+
+
 }

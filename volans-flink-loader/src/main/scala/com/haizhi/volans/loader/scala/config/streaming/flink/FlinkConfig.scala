@@ -13,7 +13,8 @@ import com.haizhi.volans.loader.scala.config.streaming.Check
 case class FlinkConfig(var parallelism:Int = 3,
                        var checkpointInterval:Int = 1000 * 60,
                        var batchInterval:Int = 10000,
-                       var restart: Int = 3) extends Check  {
+                       var restart: Int = 3,
+                       config: java.util.Map[String, Object] = null) extends Check  {
   //初始化校验
   check
   /**

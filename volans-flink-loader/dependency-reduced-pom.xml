@@ -39,7 +39,7 @@
                 <descriptor>assembly.xml</descriptor>
               </descriptors>
               <appendAssemblyId>false</appendAssemblyId>
-              <outputDirectory>${user.dir}${file.separator}build${file.separator}release${file.separator}alg</outputDirectory>
+              <outputDirectory>${user.dir}${file.separator}build${file.separator}release${file.separator}flink</outputDirectory>
             </configuration>
           </plugin>
           <plugin>
@@ -195,10 +195,6 @@
           <artifactId>flink-shaded-asm-7</artifactId>
           <groupId>org.apache.flink</groupId>
         </exclusion>
-        <exclusion>
-          <artifactId>jsr305</artifactId>
-          <groupId>com.google.code.findbugs</groupId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
@@ -210,10 +206,6 @@
         <exclusion>
           <artifactId>flink-streaming-java_2.11</artifactId>
           <groupId>org.apache.flink</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jsr305</artifactId>
-          <groupId>com.google.code.findbugs</groupId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -232,10 +224,6 @@
           <groupId>org.apache.flink</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>commons-cli</artifactId>
-          <groupId>commons-cli</groupId>
-        </exclusion>
-        <exclusion>
           <artifactId>flink-core</artifactId>
           <groupId>org.apache.flink</groupId>
         </exclusion>
@@ -247,149 +235,37 @@
           <artifactId>flink-streaming-java_2.11</artifactId>
           <groupId>org.apache.flink</groupId>
         </exclusion>
-        <exclusion>
-          <artifactId>jsr305</artifactId>
-          <groupId>com.google.code.findbugs</groupId>
-        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.flink</groupId>
-      <artifactId>flink-shaded-hadoop-2</artifactId>
-      <version>2.7.5-7.0</version>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-client</artifactId>
+      <version>2.7.5</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
-          <artifactId>commons-compress</artifactId>
-          <groupId>org.apache.commons</groupId>
+          <artifactId>hadoop-common</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>avro</artifactId>
-          <groupId>org.apache.avro</groupId>
+          <artifactId>hadoop-mapreduce-client-app</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>paranamer</artifactId>
-          <groupId>com.thoughtworks.paranamer</groupId>
+          <artifactId>hadoop-yarn-api</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>xz</artifactId>
-          <groupId>org.tukaani</groupId>
+          <artifactId>hadoop-mapreduce-client-core</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>commons-math3</artifactId>
-          <groupId>org.apache.commons</groupId>
+          <artifactId>hadoop-mapreduce-client-jobclient</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
         <exclusion>
-          <artifactId>xmlenc</artifactId>
-          <groupId>xmlenc</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-codec</artifactId>
-          <groupId>commons-codec</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-net</artifactId>
-          <groupId>commons-net</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-collections</artifactId>
-          <groupId>commons-collections</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>servlet-api</artifactId>
-          <groupId>javax.servlet</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jetty-sslengine</artifactId>
-          <groupId>org.mortbay.jetty</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-logging</artifactId>
-          <groupId>commons-logging</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>java-xmlbuilder</artifactId>
-          <groupId>com.jamesmurty.utils</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-lang</artifactId>
-          <groupId>commons-lang</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-configuration</artifactId>
-          <groupId>commons-configuration</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-digester</artifactId>
-          <groupId>commons-digester</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>apacheds-kerberos-codec</artifactId>
-          <groupId>org.apache.directory.server</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>apacheds-i18n</artifactId>
-          <groupId>org.apache.directory.server</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>api-asn1-api</artifactId>
-          <groupId>org.apache.directory.api</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>api-util</artifactId>
-          <groupId>org.apache.directory.api</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jsch</artifactId>
-          <groupId>com.jcraft</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>htrace-core</artifactId>
-          <groupId>org.apache.htrace</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>zookeeper</artifactId>
-          <groupId>org.apache.zookeeper</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-beanutils</artifactId>
-          <groupId>commons-beanutils</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-daemon</artifactId>
-          <groupId>commons-daemon</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>xercesImpl</artifactId>
-          <groupId>xerces</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>xml-apis</artifactId>
-          <groupId>xml-apis</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>leveldbjni-all</artifactId>
-          <groupId>org.fusesource.leveldbjni</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jaxb-api</artifactId>
-          <groupId>javax.xml.bind</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>stax-api</artifactId>
-          <groupId>javax.xml.stream</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>activation</artifactId>
-          <groupId>javax.activation</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>jersey-client</artifactId>
-          <groupId>com.sun.jersey</groupId>
-        </exclusion>
-        <exclusion>
-          <artifactId>commons-cli</artifactId>
-          <groupId>commons-cli</groupId>
+          <artifactId>hadoop-annotations</artifactId>
+          <groupId>org.apache.hadoop</groupId>
         </exclusion>
       </exclusions>
     </dependency>

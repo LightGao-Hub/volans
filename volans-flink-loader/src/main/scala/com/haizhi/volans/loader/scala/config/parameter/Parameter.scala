@@ -8,6 +8,7 @@ package com.haizhi.volans.loader.scala.config.parameter
  */
 object Parameter {
 
+  val CONFIG:String = "config"
   val STORE_TYPE: String = "storeType"
   val SOURCE: String = "source"
   val SOURCE_CONFIG: String = "sourceConfig"

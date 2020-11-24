@@ -15,7 +15,7 @@ import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
 import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
 import com.haizhi.volans.loader.scala.config.streaming.flink.FlinkConfig
 import com.haizhi.volans.loader.scala.config.streaming.sink.Sinks
-import com.haizhi.volans.loader.scala.config.streaming.source.KafkaSourceConfig
+import com.haizhi.volans.loader.scala.config.streaming.source.{KafkaSourceConfig, Source}
 import com.haizhi.volans.loader.scala.util.HDFSUtils
 import com.hzxt.volans.loader.java.StoreType
 import org.apache.commons.collections.MapUtils
@@ -89,8 +89,8 @@ object StreamingConfigHelper {
     Keys.taskInstanceId = dirtySink.taskInstanceId
     LOG.info(s" info ${dirtySink.storeType} dirty : $dirtySink")
     //获取source
-    val kafkaSource: KafkaSourceConfig = getSource(map)
-    LOG.info(s" info ${kafkaSource.storeType} source : $kafkaSource")
+    val source: Source = getSource(map)
+    LOG.info(s" info ${source.storeType} source, config : ${source.kafkaSourceConfig}")
     //获取sinksJson
     val sinksJson: String = getSinks(map)
     LOG.info(s" info sinks Json : $sinksJson")
@@ -105,7 +105,7 @@ object StreamingConfigHelper {
     val flinkConfig: FlinkConfig = getFlinkConfig(map)
     LOG.info(s" info flinkConfig : $flinkConfig")
 
-    StreamingConfig(kafkaSource, sinksJson, schemaVo, errorSink, dirtySink, checkPoint, flinkConfig)
+    StreamingConfig(source, sinksJson, schemaVo, errorSink, dirtySink, checkPoint, flinkConfig)
   }
 
   /**
@@ -114,19 +114,19 @@ object StreamingConfigHelper {
    * @param map 全局参数map
    * @return source类
    */
-  def getSource(map: util.Map[String, AnyRef]): KafkaSourceConfig = {
-    val sourceMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.SOURCE)))
+  def getSource(map: util.Map[String, AnyRef]): Source = {
+    val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCE)),
+      new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
+    val sourceMap: util.Map[String, AnyRef] = sourceList.get(0)
     CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
     val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(sourceMap, Parameter.STORE_TYPE))
-    if (storeType != StoreType.KAFKA)
+    var typeOfT: Type = null
+    if (storeType == StoreType.KAFKA) {
+      typeOfT = new TypeToken[KafkaSourceConfig]() {}.getType
+      val kafka: KafkaSourceConfig = JSONUtils.fromJson(JSONUtils.toJson(sourceMap.get(Parameter.SOURCE_CONFIG)), typeOfT)
+      Source(storeType, kafka)
+    } else
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} source [$storeType] 类型不存在 ")
-
-    val kafka_server = sourceMap.get(Parameter.KAFKA_SERVER).asInstanceOf[String]
-    var kafka_groupid = sourceMap.get(Parameter.KAFKA_GROUPID).asInstanceOf[String]
-    if(StringUtils.isBlank(kafka_groupid))
-      kafka_groupid = "flink-loader"
-    val topic = sourceMap.get(Parameter.TOPIC).asInstanceOf[String]
-    KafkaSourceConfig(storeType, kafka_server, kafka_groupid, topic)
   }
 
   /**

@@ -18,4 +18,4 @@ $extLibInfo \
 -ys 1 \
 -c com.haizhi.volans.loader.scala.StartFlinkLoader \
 $LIB_HOME/volans-flink-loader-1.0.0.jar \
--input hdfs://localhost:9000/volans/参数配置.json
+-input $2

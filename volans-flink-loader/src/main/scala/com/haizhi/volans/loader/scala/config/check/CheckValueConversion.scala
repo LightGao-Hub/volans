@@ -14,6 +14,7 @@ import collection.JavaConversions._
 /**
  * 脏数据校验：
  * {"from_key":"123123", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"ertreter"}
+ * {"from_key":"", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"object02"}
  * {"from_key":"123123","to_key":"","business_status":123.1,"address":1234,"object_key":"ertreter"}
  * {"from_key":"123123","address":1234,"object_key":"ertreter"}
  * {"from_key":"123123","to_key":"123","address":1234,"object_key":"ertreter"}
@@ -23,6 +24,7 @@ import collection.JavaConversions._
  * 类型转换：
  * {"from_key":"123123", "to_key":"345345", "business_status":"123.1", "address":1234, "object_key":"[1,2,3,4]"}
  * {"from_key":"123123", "to_key":"345345", "business_status":"1qwe23.1", "address":1234, "object_key":"[1,2,3,4]"}
+ * {"from_key":"123123", "to_key":"345345", "business_status":"1qwe23.1", "address":1234, "object_key":"object01"}
  */
 case class CheckValueConversion(config: StreamingConfig) {
   private val logger: Logger = LoggerFactory.getLogger(classOf[CheckValueConversion])

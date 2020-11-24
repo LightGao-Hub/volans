@@ -10,7 +10,7 @@ object SinksParameter {
 
   val DATABASE: String = "database"
   val TABLE: String = "table"
-  val DEL_Flag: String = "delFlag"
+  val DEL_FIELD: String = "delField"
   val URL: String = "url"
   val INDEX: String = "index"
   val TYPE: String = "type"

@@ -26,7 +26,7 @@ import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.slf4j.{Logger, LoggerFactory}
 import org.apache.flink.api.java.utils.ParameterTool
-
+import scala.collection.JavaConverters._
 import scala.util.Random
 
 object StartFlinkLoader {
@@ -71,10 +71,10 @@ object StartFlinkLoader {
       val sinksList: List[Sink] = SinkContext.getSinks()
       sinksList.foreach(sink => {
         if (sink.isInstanceOf[HiveSink]) {
-          stream.flatMap(_.toIterable).addSink(sink.build("")).uid("hiveSink-id")
+          stream.flatMap(_.toIterable).addSink(sink.build("")).uid(sink.uid)
         } else {
           val richSink = sink.build(Iterable(""))
-          stream.addSink(richSink)
+          stream.addSink(richSink).uid(sink.uid)
         }
       })
       //执行程序
@@ -160,13 +160,18 @@ object StartFlinkLoader {
    */
   def getKafkaSource: FlinkKafkaConsumer[String] = {
     val properties: Properties = new Properties()
-    properties.setProperty("bootstrap.servers", streamingConfig.kafkSource.servers)
-    properties.setProperty("group.id", streamingConfig.kafkSource.groupId)
+    val kafkaSourceConfig = streamingConfig.source.kafkaSourceConfig
+    properties.setProperty("bootstrap.servers", kafkaSourceConfig.servers)
+    properties.setProperty("group.id", kafkaSourceConfig.groupId)
     properties.setProperty("session.timeout.ms", "60000")
+    kafkaSourceConfig.config.asScala.foreach {
+      case (key, value) =>
+        properties.setProperty(key, String.valueOf(value))
+    }
 
     //connect Kafka, 可支持kafka >= 1.0.0
     val myConsumer: FlinkKafkaConsumer[String] = new FlinkKafkaConsumer(
-      streamingConfig.kafkSource.topic
+      kafkaSourceConfig.topic
       , new SimpleStringSchema()
       , properties
     )
