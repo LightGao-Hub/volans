@@ -73,7 +73,7 @@ object SinkContext {
     val storeType: StoreType = sinkConfig.storeType
     logger.debug(s">>>>>>>>sink format :[$storeType]")
     if (storeType == StoreType.ATLAS || storeType == StoreType.GDB) {
-      new ArangoDBSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreAtlasConfig],schemaVo)
+      new ArangoDBSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreAtlasConfig], schemaVo)
     } else if (storeType == StoreType.ES) {
       new RestEsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig])
     } else if (storeType == StoreType.HBASE) {
@@ -95,7 +95,7 @@ object SinkContext {
 
   def getSinkStoreTypes(): Seq[StoreType] = {
     val sinks: List[Sink] = getSinks()
-    sinks.map(sink => sink.storeType).toSeq
+    sinks.map(sink => sink.storeType)
   }
 
   def getSinks(): List[Sink] = {

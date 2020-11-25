@@ -50,13 +50,12 @@ class HiveSink(override var storeType: StoreType,
     logger.info(s"hive fieldSchema list: $fieldSchemaWithPartitionKeyList")
     // Hive表字段schema转Avro Schema
     avroSchemaStr = AvroUtils.convertHiveFieldToAvro(fieldSchemaWithPartitionKeyList)
+    config.setProperty("avroSchema", avroSchemaStr)
     logger.info(s"convert to avro schema: $avroSchemaStr")
-    config.put("avroSchema", avroSchemaStr)
   }
 
   /**
    * 构建HiveSink
-   *
    * @return
    */
   private def buildHiveSink: StreamingFileSink[GenericRecord] = {
@@ -97,10 +96,10 @@ class HiveSink(override var storeType: StoreType,
 
     // 工作目录
     var workDir = new Path(storeConfig.rollingPolicy.workDir)
-    if (!storeConfig.rollingPolicy.rolloverEnable) {
-      // 如果不开启文件滚动策略，默认工作目录为表数据存储路径
-      workDir = new Path(table.getSd.getLocation)
-    }
+//    if (!storeConfig.rollingPolicy.rolloverEnable) {
+//      // 如果不开启文件滚动策略，默认工作目录为表数据存储路径
+//      workDir = new Path(table.getSd.getLocation)
+//    }
 
     var streamSink: StreamingFileSink[GenericRecord] = null
 

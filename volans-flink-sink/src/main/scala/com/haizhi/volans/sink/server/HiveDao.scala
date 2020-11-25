@@ -6,7 +6,7 @@ import com.haizhi.volans.sink.config.constant.HiveStoreType
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, Table}
+import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, StorageDescriptor, Table}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -130,9 +130,9 @@ class HiveDao extends Serializable {
    */
   def addPartition(table: Table, values: java.util.List[String], partitionLocation: String): Unit = {
     val partition = new Partition()
-    val sd = table.getSd
-    sd.setLocation(sd.getLocation + partitionLocation)
-    partition.setSd(sd)
+    val partitionSd = table.getSd.deepCopy()
+    partitionSd.setLocation(table.getSd.getLocation + partitionLocation)
+    partition.setSd(partitionSd)
     partition.setValues(values)
     partition.setDbName(table.getDbName)
     partition.setTableName(table.getTableName)
