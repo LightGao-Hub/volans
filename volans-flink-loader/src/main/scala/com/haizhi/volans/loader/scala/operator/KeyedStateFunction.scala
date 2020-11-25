@@ -24,7 +24,7 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
  * 自定义keybeFunction核心类
- *
+ * 注意：度量指标不会通过检查点恢复，此外ontimer期间如果中断下次重启会先执行open 后执行ontimer，open优先级高于重启后的ontimer
  * @author gl
  */
 class KeyedStateFunction(streamingConfig: StreamingConfig) extends
@@ -66,6 +66,22 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
   lazy val freezingAlarmOutput: OutputTag[String] =
     new OutputTag[String]("dirty-out")
 
+  override def open(parameters: Configuration): Unit = {
+    logger.info(" open info ")
+    //获取脏数据度量、消费数据度量
+    if(consume_counter == null) {
+      consume_counter = getRuntimeContext
+        .getMetricGroup
+        .addGroup("volans")
+        .counter(s"consumeCount${getRuntimeContext.getIndexOfThisSubtask}")
+    }
+    if(dirty_counter == null) {
+      dirty_counter = getRuntimeContext
+        .getMetricGroup
+        .addGroup("volans")
+        .counter(s"dirtyCount${getRuntimeContext.getIndexOfThisSubtask}")
+    }
+  }
 
   override def processElement(value: (String, String),
                               ctx: KeyedProcessFunction[String, (String, String), Iterable[String]]#Context,
@@ -77,20 +93,6 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
       ctx.timerService().registerProcessingTimeTimer(timerTs)
       flagTime.update(true)
     }
-    //获取脏数据度量、消费数据度量
-     if(consume_counter == null) {
-       consume_counter = getRuntimeContext
-         .getMetricGroup
-         .addGroup("volans")
-         .counter(s"consumeCount${getRuntimeContext.getIndexOfThisSubtask}")
-     }
-     if(dirty_counter == null) {
-       dirty_counter = getRuntimeContext
-         .getMetricGroup
-         .addGroup("volans")
-         .counter(s"dirtyCount${getRuntimeContext.getIndexOfThisSubtask}")
-
-     }
     //当从savepoint点恢复时将状态赋予度量值
     if (dirtyCount.value() > dirty_counter.getCount)
       dirty_counter.inc(dirtyCount.value() - dirty_counter.getCount)
@@ -102,7 +104,7 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
     consumeCount.update(consumeCount.value() + 1)
     //度量累加
     consume_counter.inc()
-    logger.info(s"打印：key = ${value._2}, 度量总量 = ${consume_counter.getCount}, 脏数据总量 = ${dirty_counter.getCount}")
+    logger.info(s"info：key = ${value._2}, 度量总量 = ${consume_counter.getCount}, 脏数据总量 = ${dirty_counter.getCount}")
   }
 
   //触发计时器
@@ -134,7 +136,7 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
       } else
         listIterable.add(tuple._1)
     }
-    logger.info(s" onTimer check end dataList = ${listIterable}")
+    logger.info(s" onTimer check end dataList size = ${listIterable.size()}")
     //输出正确数据
     out.collect(listIterable.asScala)
     //清空数据并将flag改为false，重新触发计时器
