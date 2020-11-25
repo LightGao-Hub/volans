@@ -3,10 +3,11 @@ package com.haizhi.volans.loader.scala.config.schema
 import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
 
 /**
-  * source端数据属性集
-  */
+ * source端数据属性集
+ */
 object Keys {
   val OBJECT_KEY: String = "object_key"
+  val TYPE_ERROR: String = "TYPE_ERROR"
   val FROM_KEY: String = "from_key"
   val TO_KEY: String = "to_key"
   val DEFAULT: String = ""
