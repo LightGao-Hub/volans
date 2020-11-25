@@ -8,7 +8,7 @@ import com.haizhi.volans.sink.utils.EncryptDecryptHelper
 case class StoreAtlasConfig(url: String = null,
                             database: String = "_system",
                             collection: String = "Vertex",
-                            collectionType: String = "vertex",
+                            var collectionType: String = "vertex",
                             encryptionType: String = "ORIGINAL",
                             user: String = null,
                             password: String = null,

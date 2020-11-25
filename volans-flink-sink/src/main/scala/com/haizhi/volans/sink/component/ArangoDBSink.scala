@@ -9,6 +9,7 @@ import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
 import com.haizhi.volans.sink.server.AtlasDao
 import com.haizhi.volans.sink.component.Sink
+import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreAtlasConfig
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
@@ -19,7 +20,8 @@ import org.slf4j.LoggerFactory
  * Date 2020/11/16
  */
 class ArangoDBSink(override var storeType: StoreType,
-                   var storeConfig: StoreAtlasConfig)
+                   var storeConfig: StoreAtlasConfig,
+                   var schemaVo: SchemaVo)
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[ArangoDBSink])
@@ -32,6 +34,7 @@ class ArangoDBSink(override var storeType: StoreType,
    * @param parameters
    */
   override def open(parameters: Configuration): Unit = {
+    storeConfig.collectionType = schemaVo.`type`
     atlasDao.initClient(storeConfig)
     atlasDao.createTableIfNecessary(storeConfig)
   }
@@ -79,7 +82,7 @@ class ArangoDBSink(override var storeType: StoreType,
     if (element.containsKey(Keys.OBJECT_KEY) && !element.containsKey(Keys._KEY)) {
       element.put(Keys._KEY, element.get(Keys.OBJECT_KEY))
     }
-    if (storeConfig.isEdge()) {
+    if (schemaVo.isEdge()) {
       if (element.containsKey(Keys.FROM_KEY) && !element.containsKey(Keys._FROM)) {
         element.put(Keys._FROM, element.get(Keys.FROM_KEY))
       }
