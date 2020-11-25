@@ -11,7 +11,6 @@ import org.apache.hadoop.fs.{FileStatus, Path}
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.collection.JavaConverters._
 
@@ -22,12 +21,14 @@ import scala.collection.JavaConverters._
 object CombineFileJob extends Thread {
 
   private val logger = LoggerFactory.getLogger(getClass)
-  private var configList: mutable.Set[(StoreHiveConfig, Boolean)] = _
+  private var storeConfig: StoreHiveConfig = _
+  //Job首次启动标识
+  private var firstLaunchFlag = true
   private val hiveDao = new HiveDao()
 
 
-  def init(configList: mutable.Set[StoreHiveConfig]): Unit = {
-    this.configList = configList.map((_, true))
+  def init(storeConfig: StoreHiveConfig): Unit = {
+    this.storeConfig = storeConfig
   }
 
   def buildCombiner(storeType: String): Combiner = {
@@ -233,82 +234,79 @@ object CombineFileJob extends Thread {
   override def run(): Unit = {
     while (true) {
       try {
-        for (configTuple <- configList) {
-          val hiveConfig: StoreHiveConfig = configTuple._1
-          val table = hiveDao.getTable(hiveConfig.database, hiveConfig.table)
-          //表数据存储类型
-          val storeType = HiveStoreType.getStoreType(table.getSd.getInputFormat)
-          //表数据存储路径
-          val tableLocation = table.getSd.getLocation
-          //表分区信息
-          val partitionKeys = hiveDao.getPartitionKeys(table)
-          val partitionKeyList = partitionKeys.asJava
-          //构建combiner
-          val combiner = buildCombiner(storeType)
-          val combinerVo = hiveConfig.rollingPolicy
-          if (configTuple._2) {
-            /**
-             * 第一次启动时，处理上次程序退出未完成的文件
-             */
-            val isPartitioned = partitionKeys.length > 0
-            val unSolvedMergedList = handleUnsolvedFile(combinerVo.workDir, combiner, isPartitioned)
-            if (isPartitioned) {
-              for (unSolvedMergedFile <- unSolvedMergedList) {
-                val partitionName = unSolvedMergedFile.getName.split("-part-")(0).replaceAll("_", "/")
-                val partitionLocation = tableLocation + "/" + partitionName
-                //检查分区HDFS路径是否存在
-                if (!HDFSUtils.exists(partitionLocation)) {
-                  try {
-                    //创建分区
-                    hiveDao.addPartition(table, partitionKeyList, "/" + partitionName)
-                  } catch {
-                    case e: AlreadyExistsException => logger.warn(s"partition [/${partitionName}] already exists")
-                  }
-                }
-                //移动文件到分区目录
-                HDFSUtils.moveFile(unSolvedMergedFile, tableLocation)
-              }
-            } else {
-              HDFSUtils.moveFiles(unSolvedMergedList, tableLocation)
-            }
-          }
-
-          //处理分区文件
-          if (partitionKeys.length > 0) {
-            //查找包含文件但不包含子目录的分区目录
-            val matchedPartitionDirList = HDFSUtils.listDirectoryWithoutSubDir(new Path(combinerVo.workDir), partitionKeys.toList)
-            matchedPartitionDirList.map(targetDir => {
-              (targetDir, combineFile(hiveConfig, combiner, targetDir, true))
-            }).foreach(record => {
-              val targetDir = record._1
-              val _mergedFileList = record._2
-              val partitionLocPostFix = targetDir.toString.substring(targetDir.toString.lastIndexOf(tableLocation) + 1)
-              val partitionLocation = tableLocation + partitionLocPostFix
+        val table = hiveDao.getTable(storeConfig.database, storeConfig.table)
+        //表数据存储类型
+        val storeType = HiveStoreType.getStoreType(table.getSd.getInputFormat)
+        //表数据存储路径
+        val tableLocation = table.getSd.getLocation
+        //表分区信息
+        val partitionKeys = hiveDao.getPartitionKeys(table)
+        val partitionKeyList = partitionKeys.asJava
+        //构建combiner
+        val combiner = buildCombiner(storeType)
+        val combinerVo = storeConfig.rollingPolicy
+        if (firstLaunchFlag) {
+          /**
+           * 第一次启动时，处理上次程序退出未完成的文件
+           */
+          val isPartitioned = partitionKeys.length > 0
+          val unSolvedMergedList = handleUnsolvedFile(combinerVo.workDir, combiner, isPartitioned)
+          if (isPartitioned) {
+            for (unSolvedMergedFile <- unSolvedMergedList) {
+              val partitionName = unSolvedMergedFile.getName.split("-part-")(0).replaceAll("_", "/")
+              val partitionLocation = tableLocation + "/" + partitionName
               //检查分区HDFS路径是否存在
               if (!HDFSUtils.exists(partitionLocation)) {
                 try {
                   //创建分区
-                  hiveDao.addPartition(table, partitionKeyList, partitionLocPostFix)
+                  hiveDao.addPartition(table, partitionKeyList, "/" + partitionName)
                 } catch {
-                  case e: AlreadyExistsException => logger.warn(s"partition [${partitionLocPostFix}] already exists")
+                  case e: AlreadyExistsException => logger.warn(s"partition [/${partitionName}] already exists")
                 }
               }
               //移动文件到分区目录
-              HDFSUtils.moveFiles(_mergedFileList, tableLocation)
-            })
-          } else {
-            //处理非分区文件
-            val mergedFileList = combineFile(hiveConfig, combiner, new Path(combinerVo.workDir), false)
-            //移动合并后的文件到目标表仓库路径下
-            if (mergedFileList.size > 0) {
-              HDFSUtils.moveFiles(mergedFileList, tableLocation)
+              HDFSUtils.moveFile(unSolvedMergedFile, tableLocation)
             }
+          } else {
+            HDFSUtils.moveFiles(unSolvedMergedList, tableLocation)
+          }
+        }
+
+        //处理分区文件
+        if (partitionKeys.length > 0) {
+          //查找包含文件但不包含子目录的分区目录
+          val matchedPartitionDirList = HDFSUtils.listDirectoryWithoutSubDir(new Path(combinerVo.workDir), partitionKeys.toList)
+          matchedPartitionDirList.map(targetDir => {
+            (targetDir, combineFile(storeConfig, combiner, targetDir, true))
+          }).foreach(record => {
+            val targetDir = record._1
+            val _mergedFileList = record._2
+            val partitionLocPostFix = targetDir.toString.substring(targetDir.toString.lastIndexOf(tableLocation) + 1)
+            val partitionLocation = tableLocation + partitionLocPostFix
+            //检查分区HDFS路径是否存在
+            if (!HDFSUtils.exists(partitionLocation)) {
+              try {
+                //创建分区
+                hiveDao.addPartition(table, partitionKeyList, partitionLocPostFix)
+              } catch {
+                case e: AlreadyExistsException => logger.warn(s"partition [${partitionLocPostFix}] already exists")
+              }
+            }
+            //移动文件到分区目录
+            HDFSUtils.moveFiles(_mergedFileList, tableLocation)
+          })
+        } else {
+          //处理非分区文件
+          val mergedFileList = combineFile(storeConfig, combiner, new Path(combinerVo.workDir), false)
+          //移动合并后的文件到目标表仓库路径下
+          if (mergedFileList.size > 0) {
+            HDFSUtils.moveFiles(mergedFileList, tableLocation)
           }
         }
         //修改首次处理任务的标识
-        configList = configList.map(record => (record._1, false))
-        //Job间隔时间(jobInterval)，默认5分钟
-        Thread.sleep(5 * 60 * 1000)
+        firstLaunchFlag = false
+        //Job间隔时间(jobInterval)，默认1分钟
+        Thread.sleep(60 * 1000)
       } catch {
         case e: Exception => {
           logger.error(e.getMessage, e)

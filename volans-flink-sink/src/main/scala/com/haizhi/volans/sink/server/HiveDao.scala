@@ -9,6 +9,8 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, Table}
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
+
 /**
  * Author pengxb
  * Date 2020/11/3
@@ -33,6 +35,66 @@ class HiveDao extends Serializable {
 
   def getStoreType(database: String, table: String): String = {
     getStoreType(getTable(database, table))
+  }
+
+
+  /**
+   * 获取Hive表字段列表，不包括分区字段
+   * @param table
+   * @return List[(field,type)]
+   */
+  def getFieldSchema(table: Table): List[(String,String)] = {
+    val cols = table.getSd.getCols
+    val list = new ListBuffer[(String,String)]
+
+    for(i <- 0 until cols.size()){
+      list.append((cols.get(i).getName,cols.get(i).getType))
+    }
+    list.toList
+  }
+
+  /**
+   * 获取Hive表字段列表，包括分区字段
+   * @param table
+   * @return
+   */
+  def getAllFieldSchema(table: Table): List[(String,String)] = {
+    val cols = table.getSd.getCols
+    val list = new ListBuffer[(String,String)]
+
+    // 常规字段
+    for(i <- 0 until cols.size()){
+      list.append((cols.get(i).getName,cols.get(i).getType))
+    }
+    // 分区字段
+    val partitionKeys = table.getPartitionKeys
+    for(i <- 0 until partitionKeys.size()){
+      list.append((partitionKeys.get(i).getName,partitionKeys.get(i).getType))
+    }
+    list.toList
+  }
+
+  /**
+   * 获取Hive表字段map集合
+   * @param table
+   * @return
+   */
+  def getFieldSchemaMap(table: Table): java.util.Map[String,String] = {
+    val cols = table.getSd.getCols
+    val schemaMap = new java.util.HashMap[String,String]
+    for(i <- 0 until cols.size()){
+      schemaMap.put(cols.get(i).getName,cols.get(i).getType)
+    }
+    schemaMap
+  }
+
+  /**
+   * 获取字段分隔符
+   * @param table
+   * @return
+   */
+  def getFieldDelimited(table: Table): String ={
+    table.getSd.getSerdeInfo.getParameters.get("field.delim")
   }
 
   /**
@@ -92,7 +154,7 @@ class HiveDao extends Serializable {
     this.addPartition(_table, values, partitionLocation)
   }
 
-  def release(): Unit = {
+  def shutdown(): Unit = {
     try {
       if (client != null) {
         client.close()

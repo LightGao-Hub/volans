@@ -1,5 +1,7 @@
 package com.haizhi.volans.sink.component
 
+import java.util.Properties
+
 import com.haizhi.volans.sink.config.constant.StoreType
 import com.haizhi.volans.sink.config.store.StoreJanusConfig
 import org.apache.flink.configuration.Configuration
@@ -15,7 +17,6 @@ class JanusGraphSink(override var storeType: StoreType,
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[JanusGraphSink])
-
   override var uid: String = "JanusGraph"
 
   override def open(parameters: Configuration): Unit = {

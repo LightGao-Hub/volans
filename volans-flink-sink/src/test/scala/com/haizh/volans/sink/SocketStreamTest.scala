@@ -1,15 +1,32 @@
-package com.haizh.volans.sink
+package com.haizhi.volans.sink
+
+
+import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
+import java.util.Properties
 
 import com.haizhi.volans.sink.component.{HiveSink, SinkContext}
-import org.apache.flink.streaming.api.scala._
+import com.haizhi.volans.sink.config.constant.{CoreConstants, HiveStoreType, Keys}
+import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue}
+import com.haizhi.volans.sink.writer.orc.{OrcUtils, OrcWriters}
+import com.haizhi.volans.sink.server.HiveDao
+import com.haizhi.volans.sink.util.{AvroUtils, LocalFileUtils}
+import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
+import org.apache.avro.io.{DatumReader, Decoder, DecoderFactory, Encoder, EncoderFactory}
+import org.apache.flink.core.fs.Path
+import org.apache.flink.formats.parquet.avro.ParquetAvroWriters
 import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.functions.sink.filesystem.{BucketAssigner, StreamingFileSink}
+import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.BasePathBucketAssigner
+import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.OnCheckpointRollingPolicy
 import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
-import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment}
+import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment, _}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.util.Collector
 import org.slf4j.LoggerFactory
+import org.apache.flink.streaming.api.scala._
 
 /**
  * Author pengxb
@@ -20,6 +37,7 @@ object SocketStreamTest {
 
   def main(args: Array[String]): Unit = {
     val senv = StreamExecutionEnvironment.getExecutionEnvironment
+    //    senv.registerType(classOf[HttpHost])
     senv.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime)
     senv.enableCheckpointing(10000)
 
@@ -28,23 +46,27 @@ object SocketStreamTest {
      * {"name":"张三","age":22,"gender":"male","country":"China","province":"Guangzhou","object_key":"3","_operation":"INSERT"}
      * {"name":"张三","age":22,"gender":"male","country":"China","province":"Guangzhou","object_key":"3","_operation":"DELETE"}
      */
-      val hostname = if(args.length > 0) {
-        args(0)
-      } else {
-        "localhost"
-      }
+
+    println(s"userConfig: ${senv.getConfig.getGlobalJobParameters.toMap}")
+
+    val hostname = if (args.length > 0) {
+      args(0)
+    } else {
+      "localhost"
+    }
+
     val input: DataStream[Iterable[String]] = senv
       .socketTextStream(hostname, 9999)
-      .map(_ -> 1)
+      .map(_ -> "default")
       .keyBy(_._2)
       .window(TumblingProcessingTimeWindows.of(Time.seconds(10)))
-      .process(new ProcessWindowFunction[(String, Int), Iterable[String], Int, TimeWindow] {
-        override def process(key: Int, context: Context, elements: Iterable[(String, Int)], out: Collector[Iterable[String]]): Unit = {
+      .process(new ProcessWindowFunction[(String, String), Iterable[String], String, TimeWindow] {
+        override def process(key: String, context: Context, elements: Iterable[(String, String)], out: Collector[Iterable[String]]): Unit = {
           out.collect(elements.map(_._1))
         }
       })
 
-    val jsonStr =
+    var jsonStr =
       """
         |{
         |    "sinks":[
@@ -58,79 +80,6 @@ object SocketStreamTest {
         |                "physicsPartitions":16,
         |                "config":{
         |
-        |                }
-        |            }
-        |        },
-        |        {
-        |            "storeType":"GDB",
-        |            "storeConfig":{
-        |                "database":"Graph_CDH570",
-        |                "collection":"arangoDBTest",
-        |                "collectionType":"vertex",
-        |                "maxConnections":5,
-        |                "numberOfShards":9,
-        |                "password":"haizhi",
-        |                "replicationFactor":1,
-        |                "url":"192.168.1.37:8529",
-        |                "user":"haizhi"
-        |            }
-        |        },
-        |         {
-        |            "storeType":"ES",
-        |            "storeConfig":{
-        |                "index":"flink_test.person",
-        |                "type":"person",
-        |                "url":"192.168.1.208:9200",
-        |                "mapping":{
-        |                    "dynamic_date_formats":[
-        |                        "yyyy-MM-dd HH:mm:ss",
-        |                        "yyyy-MM-dd"
-        |                    ],
-        |                    "dynamic_templates":[
-        |                        {
-        |                            "strings":{
-        |                                "mapping":{
-        |                                    "analyzer":"ik",
-        |                                    "type":"text",
-        |                                    "field s":{
-        |                                        "keyword":{
-        |                                            "normalizer":"my_normalizer",
-        |                                            "type":"keyword"
-        |                                        }
-        |                                    }
-        |                                },
-        |                                "match_mapping_type":"string"
-        |                            }
-        |                        }
-        |                    ],
-        |                    "_all":{
-        |                        "enabled":false
-        |                    },
-        |                    "date_detection":true
-        |                },
-        |                "setting":{
-        |                    "analysis":{
-        |                        "normalizer":{
-        |                            "my_normalizer":{
-        |                                "filter":[
-        |                                    "lowercase",
-        |                                    "asciifolding"
-        |                                ],
-        |                                "char_filter":[
-        |
-        |                                ],
-        |                                "type":"custom"
-        |                            }
-        |                        },
-        |                        "analyzer":{
-        |                            "ik":{
-        |                                "type":"custom",
-        |                                "tokenizer":"ik_max_word"
-        |                            }
-        |                        }
-        |                    },
-        |                    "index.number_of_replicas":1,
-        |                    "index.number_of_shards":5
         |                }
         |            }
         |        }
@@ -174,20 +123,78 @@ object SocketStreamTest {
         |}
         |""".stripMargin
 
+    if (args.length > 1) {
+      jsonStr = LocalFileUtils.readFile2String(args(1))
+    }
+
     // Sink参数解析
     SinkContext.parseArgs(jsonStr)
     // 获取Sink列表
     val sinksList = SinkContext.getSinks()
+    println(s"println -> Sink List[$sinksList]")
+    logger.debug(s"debug -> Sink List[$sinksList]")
+    logger.info(s"info -> Sink List[$sinksList]")
+
+    var schemaStr =
+      """
+        |{
+        |  "name": "GenericRecord",
+        |  "type": "record",
+        |  "namespace": "com.haizhi.volans",
+        |  "fields": [
+        |    {
+        |      "name": "name",
+        |      "type": "string"
+        |    },
+        |    {
+        |      "name": "age",
+        |      "type": "long"
+        |    },
+        |    {
+        |      "name": "gender",
+        |      "type": "string"
+        |    },
+        |    {
+        |      "name": "country",
+        |      "type": "string"
+        |    },
+        |    {
+        |      "name": "province",
+        |      "type": "string"
+        |    },
+        |    {
+        |      "name": "object_key",
+        |      "type": "string"
+        |    },
+        |    {
+        |      "name": "_operation",
+        |      "type": "string"
+        |    }
+        |  ]
+        |}
+        |""".stripMargin
+
     // Add Sink
     sinksList.foreach(sink => {
       if (sink.isInstanceOf[HiveSink]) {
-        input.flatMap(_.toIterable).addSink(sink.build(""))
+        // 获取avro schema
+        val avroSchema = sink.config.getProperty(CoreConstants.AVRO_SCHEMA)
+        input.flatMap(_.toIterable)
+          .map(new AvroConvertMapFunction(avroSchema))
+          .addSink(sink.build(GenericFuncValue.GENERICRECORD))
       } else {
-        val richSink = sink.build(Iterable(""))
+        val richSink = sink.build(GenericFuncValue.ITERABLE_STRING)
         input.addSink(richSink)
       }
     })
 
-    senv.execute("Flink Hbase Test")
+    senv.execute("Flink Hive Test")
   }
+
+  def validateAndMerge(element: java.util.Map[String, Object]): Unit = {
+    if (element.containsKey(Keys.OBJECT_KEY) && !element.containsKey(Keys.ID)) {
+      element.put(Keys.ID, element.get(Keys.OBJECT_KEY))
+    }
+  }
+
 }

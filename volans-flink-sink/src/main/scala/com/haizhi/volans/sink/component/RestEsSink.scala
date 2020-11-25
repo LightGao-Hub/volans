@@ -1,6 +1,7 @@
 package com.haizhi.volans.sink.component
 
 import java.util
+import java.util.Properties
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
@@ -20,9 +21,10 @@ class RestEsSink(override var storeType: StoreType,
 
   private val logger = LoggerFactory.getLogger(classOf[RestEsSink])
   override var uid: String = "ES"
-  private val esDao: EsDao = new EsDao()
+  private var esDao: EsDao = _
 
   override def open(parameters: Configuration): Unit = {
+    esDao = new EsDao()
     // 初始化Rest客户端
     esDao.initClient(storeConfig)
     // 创建index、type

@@ -1,6 +1,7 @@
 package com.flink.sink.sinks
 
 import java.util
+import java.util.Properties
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, FieldType, JavaFieldType, Keys, StoreType}
@@ -28,7 +29,6 @@ class HbaseSink(override var storeType: StoreType,
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[HbaseSink])
-
   override var uid: String = "Hbase"
   private val hbaseDao: HBaseDao = new HBaseDao()
   private var fieldTypeMap: Map[String, JavaFieldType] = _

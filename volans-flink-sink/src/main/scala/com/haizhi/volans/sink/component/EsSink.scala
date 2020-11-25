@@ -1,25 +1,26 @@
 package com.haizhi.volans.sink.component
 
 import java.util
+import java.util.Properties
 
-import com.google.gson.Gson
-import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
+//import com.google.gson.Gson
+//import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.store.StoreEsConfig
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
-import org.apache.flink.api.common.functions.RuntimeContext
+//import org.apache.flink.api.common.functions.RuntimeContext
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
-import org.apache.flink.streaming.connectors.elasticsearch.{ActionRequestFailureHandler, ElasticsearchSinkFunction, RequestIndexer}
-import org.apache.flink.streaming.connectors.elasticsearch6.{ElasticsearchSink, RestClientFactory}
-import org.apache.flink.util.ExceptionUtils
-import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
-import org.apache.http.message.BasicHeader
-import org.apache.http.{Header, HttpHost}
-import org.elasticsearch.ElasticsearchParseException
-import org.elasticsearch.action.ActionRequest
-import org.elasticsearch.client.{Requests, RestClientBuilder}
-import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException
-import org.elasticsearch.common.xcontent.XContentType
+//import org.apache.flink.streaming.connectors.elasticsearch.{ActionRequestFailureHandler, ElasticsearchSinkFunction, RequestIndexer}
+//import org.apache.flink.streaming.connectors.elasticsearch6.{ElasticsearchSink, RestClientFactory}
+//import org.apache.flink.util.ExceptionUtils
+//import org.apache.http.impl.client.BasicCredentialsProvider
+//import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
+//import org.apache.http.message.BasicHeader
+//import org.apache.http.{Header, HttpHost}
+//import org.elasticsearch.ElasticsearchParseException
+//import org.elasticsearch.action.ActionRequest
+//import org.elasticsearch.client.{Requests, RestClientBuilder}
+//import org.elasticsearch.common.util.concurrent.EsRejectedExecutionException
+//import org.elasticsearch.common.xcontent.XContentType
 import org.slf4j.LoggerFactory
 
 /**
@@ -29,13 +30,12 @@ import org.slf4j.LoggerFactory
  */
 class EsSink(override var storeType: StoreType,
              var storeConfig: StoreEsConfig)
-  extends Sink with java.io.Serializable {
+  extends Sink with Serializable {
   /**
    * 需要实现序列化接口，否则会报错
    * The implementation of the provided ElasticsearchSinkFunction is not serializable. The object probably contains or references non-serializable fields
    */
   private val logger = LoggerFactory.getLogger(classOf[EsSink])
-
   override var uid: String = "ES"
 
   /**
@@ -44,10 +44,10 @@ class EsSink(override var storeType: StoreType,
    * @return
    */
   def buildEsSink: RichSinkFunction[Iterable[String]] = {
-    val httpHosts = new java.util.ArrayList[HttpHost]
-    httpHosts.add(new HttpHost(storeConfig.getEsHosts(), storeConfig.getEsPort().toInt, "http"))
+//    val httpHosts = new java.util.ArrayList[HttpHost]
+//    httpHosts.add(new HttpHost(storeConfig.getEsHosts(), storeConfig.getEsPort().toInt, "http"))
 
-    val esSinkBuilder = new ElasticsearchSink.Builder[Iterable[String]](
+    /*val esSinkBuilder = new ElasticsearchSink.Builder[Iterable[String]](
       httpHosts,
       new ElasticsearchSinkFunction[Iterable[String]] {
         def process(elements: Iterable[String], ctx: RuntimeContext, indexer: RequestIndexer) {
@@ -112,7 +112,8 @@ class EsSink(override var storeType: StoreType,
         })
       }
     })
-    esSinkBuilder.build()
+    esSinkBuilder.build()*/
+    ???
   }
 
   /**

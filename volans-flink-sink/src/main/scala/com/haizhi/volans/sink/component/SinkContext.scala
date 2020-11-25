@@ -82,7 +82,9 @@ object SinkContext {
     } else if (storeType == StoreType.JANUS) {
       new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
     } else if (storeType == StoreType.HIVE) {
-      new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig])
+      val hiveSink = new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig], schemaVo)
+      hiveSink.init()
+      hiveSink
     } else {
       throw new RuntimeException(">>>data out format error")
     }

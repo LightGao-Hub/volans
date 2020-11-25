@@ -5,7 +5,7 @@ import com.haizhi.volans.sink.config.schema.RollingPolicyVo
 /**
  * Create by zhoumingbing on 2020-08-13
  */
-case class StoreHiveConfig(database: String,
+case class StoreHiveConfig(database: String = "default",
                            table: String,
                            user: String,
                            password: String,

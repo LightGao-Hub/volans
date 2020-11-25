@@ -20,4 +20,7 @@ object CoreConstants {
   val STORE_TYPE: String = "storeType"
   val STORE_CONFIG: String = "storeConfig"
   val SCHEMA: String = "schema"
+
+  val AVRO_SCHEMA = "avroSchema"
+
 }

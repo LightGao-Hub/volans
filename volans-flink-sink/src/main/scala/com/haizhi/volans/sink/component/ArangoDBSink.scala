@@ -1,6 +1,7 @@
 package com.flink.sink.sinks
 
 import java.util
+import java.util.Properties
 
 import com.arangodb.model.DocumentImportOptions
 import com.arangodb.model.DocumentImportOptions.OnDuplicate
@@ -22,9 +23,7 @@ class ArangoDBSink(override var storeType: StoreType,
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[ArangoDBSink])
-
   override var uid: String = "ArangoDB"
-
   private val atlasDao = new AtlasDao()
 
   /**
