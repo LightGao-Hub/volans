@@ -62,7 +62,7 @@ case class CheckValueConversion(config: StreamingConfig) {
       if (!nameSet.contains(item.getKey))
         it.remove()
     }
-    logger.info(s"打印删除多余字段后的 value : $stringToObject")
+    //logger.info(s"删除多余字段后 value : $stringToObject")
     //类型转换
     typeConversion(stringToObject, fields)
   }
@@ -77,12 +77,13 @@ case class CheckValueConversion(config: StreamingConfig) {
         val schema: SchemaFieldVo = fields.get(item.getKey)
         item.setValue(convert(item.getValue, schema))
       }
-      logger.info(s"状态修改后的 json = ${JSONUtils.toJson(stringToObject)}")
+      //logger.info(s"状态修改后的 json = ${JSONUtils.toJson(stringToObject)}")
       JSONUtils.toJson(stringToObject) -> true
     } catch {
-      case _: Exception =>
+      case e: Exception =>
         logger.info(s" 类型转换异常，此条为脏数据 ")
-        JSONUtils.toJson(stringToObject) -> false
+        getErrorMessageJson(stringToObject.get(s"${Keys.OBJECT_KEY}").toString, JSONUtils.toJson(stringToObject), Keys.TYPE_ERROR,
+          s" 类型转换异常 ${e.getMessage}") -> false
     }
   }
 
