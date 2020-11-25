@@ -1,7 +1,5 @@
 package com.haizhi.volans.sink.component
 
-import java.util.Properties
-
 import com.haizhi.volans.sink.config.constant.StoreType
 import com.haizhi.volans.sink.config.store.StoreJanusConfig
 import org.apache.flink.configuration.Configuration

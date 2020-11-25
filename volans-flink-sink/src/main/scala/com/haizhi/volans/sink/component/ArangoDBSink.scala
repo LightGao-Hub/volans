@@ -1,7 +1,6 @@
-package com.flink.sink.sinks
+package com.haizhi.volans.sink.component
 
 import java.util
-import java.util.Properties
 
 import com.arangodb.model.DocumentImportOptions
 import com.arangodb.model.DocumentImportOptions.OnDuplicate

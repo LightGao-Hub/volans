@@ -149,7 +149,7 @@
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
-            <scope>${scope.version}</scope>
+<!--            <scope>${scope.version}</scope>-->
         </dependency>
 
         <!--<dependency>
@@ -229,84 +229,5 @@
         <!--arangodb end-->
 
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
-                <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
-                    <encoding>${project.build.sourceEncoding}</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.scala-tools</groupId>
-                <artifactId>maven-scala-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <scalaVersion>${scala.version}</scalaVersion>
-                    <args>
-                        <arg>-target:jvm-1.8</arg>
-                    </args>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.basedir}/target/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!--<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <archive>
-&lt;!&ndash;                        <manifest>&ndash;&gt;
-&lt;!&ndash;                            <mainClass>com.demo.Demo</mainClass>&ndash;&gt;
-&lt;!&ndash;                        </manifest>&ndash;&gt;
-                    </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-&lt;!&ndash;                    <outputDirectory>${project.build.directory}/lib</outputDirectory>&ndash;&gt;
-                </configuration>
-                &lt;!&ndash;下面是为了使用 mvn package命令，如果不加则使用mvn assembly:assembly&ndash;&gt;
-                <executions>
-                    <execution>
-                        <id>make-assemble</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>-->
-
-        </plugins>
-    </build>
 
 </project>
