@@ -2,7 +2,6 @@ package com.haizhi.volans.sink.component
 
 import java.lang.reflect.Type
 
-import com.flink.sink.sinks.{ArangoDBSink, HbaseSink}
 import com.google.gson.reflect.TypeToken
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, StoreType}

@@ -1,14 +1,12 @@
-package com.flink.sink.sinks
+package com.haizhi.volans.sink.component
 
 import java.util
-import java.util.Properties
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, FieldType, JavaFieldType, Keys, StoreType}
 import com.haizhi.volans.sink.config.key.RowKeyGetter
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.server.HBaseDao
-import com.haizhi.volans.sink.component.Sink
 import com.haizhi.volans.sink.config.store.StoreHBaseConfig
 import com.haizhi.volans.sink.utils.HbaseSerializer
 import org.apache.flink.configuration.Configuration

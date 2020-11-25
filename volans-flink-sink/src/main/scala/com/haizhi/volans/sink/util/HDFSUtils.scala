@@ -201,6 +201,10 @@ object HDFSUtils {
     fs.exists(new Path(path))
   }
 
+  def exists(path: Path): Boolean = {
+    fs.exists(path)
+  }
+
   def isDirectory(path: String): Boolean = {
     fs.isDirectory(new Path(path))
   }
