@@ -105,7 +105,7 @@ class HiveSink(override var storeType: StoreType,
     var streamSink: StreamingFileSink[GenericRecord] = null
 
     // orc、parquet
-    if (HiveStoreType.ORC.equals(tableStoreType) || HiveStoreType.PARQUET.eq(tableStoreType)) {
+    if (HiveStoreType.ORC.equals(tableStoreType) || HiveStoreType.PARQUET.equals(tableStoreType)) {
       val writerFactory: BulkWriter.Factory[GenericRecord] =
         if (HiveStoreType.ORC.equals(tableStoreType)) {
           OrcWriters.forGenericRecord(avroSchemaStr, new Properties())
