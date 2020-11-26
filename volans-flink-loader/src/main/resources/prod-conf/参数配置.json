@@ -26,33 +26,38 @@
     }
   },
   "schema": {
-    "fields": {
-      "from_key": {
+    "fields": [
+      {
+        "sourceName": "from_key",
         "isMain": "N",
-        "name": "from_key",
+        "targetName": "from_key",
         "type": "STRING"
       },
-      "to_key": {
+      {
+        "sourceName": "to_key",
         "isMain": "N",
-        "name": "to_key",
+        "targetName": "to_key",
         "type": "STRING"
       },
-      "business_status": {
+      {
+        "sourceName": "business_status",
         "isMain": "Y",
-        "name": "business_status",
+        "targetName": "business_status",
         "type": "STRING"
       },
-      "address": {
+      {
+        "sourceName": "address",
         "isMain": "N",
-        "name": "address",
+        "targetName": "address",
         "type": "DOUBLE"
       },
-      "object_key": {
+      {
+        "sourceName": "object_key",
         "isMain": "N",
-        "name": "object_key",
+        "targetName": "object_key",
         "type": "STRING"
       }
-    },
+    ],
     "name": "com_new_vertex_tv_user_shanghai_1",
     "type": "edge"
   },

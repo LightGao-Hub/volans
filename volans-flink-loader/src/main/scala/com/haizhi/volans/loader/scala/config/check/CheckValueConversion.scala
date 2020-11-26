@@ -119,6 +119,8 @@ case class CheckValueConversion(config: StreamingConfig) {
           longV = i.toLong
         case date: Date =>
           longV = date.getTime
+        case d: Double =>
+          longV = d.toLong
         case _ =>
           longV = String.valueOf(value).toLong
       }
