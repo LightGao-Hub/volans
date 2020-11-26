@@ -1,5 +1,4 @@
 {
-  "checkPoint": "hdfs://localhost:9000/tmp/volans/checkpoints/gourpId",
   "dirtySink": {
     "storeType": "file",
     "errorMode": -1,
@@ -17,7 +16,8 @@
       "path": "hdfs://localhost:9000/tmp/volans/groupId/taskInstanceId/error.log"
     }
   },
-  "flinkConfig": {
+  "taskConfig": {
+    "checkPoint": "hdfs://localhost:9000/tmp/volans/checkpoints/gourpId",
     "parallelism": 3,
     "checkpointInterval": 10000,
     "batchInterval": 10000,
@@ -148,7 +148,7 @@
       "storeType": "HIVE",
       "storeConfig": {
         "database": "bigdata_test",
-        "table": "tv_user",
+        "table": "tv_user4",
         "user": "",
         "password": "",
         "delField":"delFlag",
@@ -163,7 +163,7 @@
       }
     }
   ],
-  "source": [
+  "sources": [
     {
       "storeType":"KAFKA",
       "sourceConfig":{

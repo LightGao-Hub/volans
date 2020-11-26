@@ -97,15 +97,12 @@ object StreamingConfigHelper {
     //获取schema
     val schemaVo: SchemaVo = getSchema(map)
     LOG.info(s" info schemaVo : $schemaVo")
-    //获取checkpoint
-    CheckHelper.checkNotNull(MapUtils.getString(map, Parameter.CHECKPOINT), Parameter.CHECKPOINT, taskId = Keys.taskInstanceId)
-    val checkPoint: String = map.get(Parameter.CHECKPOINT).toString
-    LOG.info(s" info checkpoint : $checkPoint")
     //获取flinkConfig
     val flinkConfig: FlinkConfig = getFlinkConfig(map)
     LOG.info(s" info flinkConfig : $flinkConfig")
+    LOG.info(s" info checkpoint : ${flinkConfig.checkPoint}")
 
-    StreamingConfig(source, sinksJson, schemaVo, errorSink, dirtySink, checkPoint, flinkConfig)
+    StreamingConfig(source, sinksJson, schemaVo, errorSink, dirtySink, flinkConfig)
   }
 
   /**
@@ -115,7 +112,7 @@ object StreamingConfigHelper {
    * @return source类
    */
   def getSource(map: util.Map[String, AnyRef]): Source = {
-    val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCE)),
+    val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCES)),
       new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
     val sourceMap: util.Map[String, AnyRef] = sourceList.get(0)
     CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
@@ -181,7 +178,7 @@ object StreamingConfigHelper {
    * @return flinkConfig
    */
   def getFlinkConfig(map: util.Map[String, AnyRef]): FlinkConfig = {
-    val flinkConfing: FlinkConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.FLINK_CONFIG)), new TypeToken[FlinkConfig]() {}.getType)
+    val flinkConfing: FlinkConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.TASK_CONFIG)), new TypeToken[FlinkConfig]() {}.getType)
     flinkConfing.check
     flinkConfing
   }

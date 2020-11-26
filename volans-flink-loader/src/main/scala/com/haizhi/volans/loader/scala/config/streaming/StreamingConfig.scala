@@ -15,7 +15,6 @@ case class StreamingConfig(source: Source,
                            schemaVo: SchemaVo,
                            errorSink: ErrorSink,
                            dirtySink: DirtySink,
-                           checkPoint: String = "file:///tmp/flink.checkpoints",
                            flinkConfig: FlinkConfig) {
 
 }

@@ -10,7 +10,7 @@ object Parameter {
 
   val CONFIG:String = "config"
   val STORE_TYPE: String = "storeType"
-  val SOURCE: String = "source"
+  val SOURCES: String = "sources"
   val SOURCE_CONFIG: String = "sourceConfig"
   val SINKS: String = "sinks"
   val SCHEMA: String = "schema"
@@ -22,7 +22,7 @@ object Parameter {
   val COUNT_CONFIG: String = "countConfig"
   val CHECKPOINT: String = "checkPoint"
   val STPO_VOLANS_PATH: String = "stopVolansPath"
-  val FLINK_CONFIG: String = "flinkConfig"
+  val TASK_CONFIG: String = "taskConfig"
   val STORE_CONFIG: String = "storeConfig"
 
   val FIELDS: String = "fields"

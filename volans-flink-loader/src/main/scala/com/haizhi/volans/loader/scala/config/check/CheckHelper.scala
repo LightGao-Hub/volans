@@ -27,8 +27,8 @@ object CheckHelper {
    * 检查map中是否有不存在的key
    */
   def checkMap(map: util.Map[String, AnyRef]): Unit = {
-    if (!map.containsKey(Parameter.SOURCE))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.SOURCE}] Key field missing")
+    if (!map.containsKey(Parameter.SOURCES))
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.SOURCES}] Key field missing")
     if (!map.containsKey(Parameter.SINKS))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.SINKS}] Key field missing")
     if (!map.containsKey(Parameter.SCHEMA))
@@ -37,10 +37,8 @@ object CheckHelper {
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.DIRTY_SINK}] Key field missing")
     if (!map.containsKey(Parameter.ERROR_SINK))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.ERROR_SINK}] Key field missing")
-    if (!map.containsKey(Parameter.CHECKPOINT))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.CHECKPOINT}] Key field missing")
-    if (!map.containsKey(Parameter.FLINK_CONFIG))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.FLINK_CONFIG}] Key field missing")
+    if (!map.containsKey(Parameter.TASK_CONFIG))
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.TASK_CONFIG}] Key field missing")
     LOG.info(" checkMap The parameters are correct")
   }
 

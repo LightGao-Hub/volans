@@ -1,5 +1,4 @@
 {
-  "checkPoint": "hdfs://nameservice1/tmp/volans/checkpoints/gourpId",
   "dirtySink": {
     "storeType": "file",
     "errorMode": -1,
@@ -8,22 +7,22 @@
     "inboundTaskId": "7083-HBASE",
     "taskInstanceId": "7083",
     "dirtyConfig": {
-      "path": "hdfs://nameservice1/tmp/volans/groupId/dirty"
+      "path": "hdfs://nameservice1/tmp/volans2/groupId/dirty"
     }
   },
   "errorSink": {
     "storeType": "file",
     "errorConfig": {
-      "path": "hdfs://nameservice1/tmp/volans/groupId/taskInstanceId/error.log"
+      "path": "hdfs://nameservice1/tmp/volans2/groupId/taskInstanceId/error.log"
     }
   },
-  "flinkConfig": {
+  "taskConfig": {
+    "checkPoint": "hdfs://nameservice1/tmp/volans2/checkpoints/gourpId",
     "parallelism": 3,
     "checkpointInterval": 10000,
     "batchInterval": 10000,
     "restart": 3,
-    "config":{
-
+    "config": {
     }
   },
   "schema": {
@@ -59,15 +58,14 @@
   },
   "sinks": [
     {
-      "storeType":"HBASE",
-      "storeConfig":{
-        "url":"192.168.1.131,192.168.1.132,192.168.1.134:2181",
-        "namespace":"default",
-        "table":"flink_test.person",
-        "logicPartitions":1000,
-        "physicsPartitions":16,
-        "config":{
-
+      "storeType": "HBASE",
+      "storeConfig": {
+        "url": "192.168.1.131,192.168.1.132,192.168.1.134:2181",
+        "namespace": "default",
+        "table": "flink_test.person",
+        "logicPartitions": 1000,
+        "physicsPartitions": 16,
+        "config": {
         }
       }
     },
@@ -113,7 +111,6 @@
                   "asciifolding"
                 ],
                 "char_filter": [
-
                 ],
                 "type": "custom"
               }
@@ -127,50 +124,51 @@
           },
           "index.number_of_replicas": 1,
           "index.number_of_shards": 5
+        },
+        "nativeConfig": {
         }
       }
     },
     {
-      "storeType":"GDB",
-      "storeConfig":{
-        "database":"Graph_CDH570",
-        "collection":"arangoDBTest",
-        "maxConnections":5,
-        "numberOfShards":9,
-        "password":"haizhi",
-        "replicationFactor":1,
-        "url":"192.168.1.37:8529",
-        "user":"haizhi"
+      "storeType": "GDB",
+      "storeConfig": {
+        "database": "Graph_CDH570",
+        "collection": "arangoDBTest",
+        "maxConnections": 5,
+        "numberOfShards": 9,
+        "password": "haizhi",
+        "replicationFactor": 1,
+        "url": "192.168.1.37:8529",
+        "user": "haizhi"
       }
     },
     {
       "storeType": "HIVE",
       "storeConfig": {
         "database": "bigdata_test",
-        "table": "tv_user",
+        "table": "tv_user4",
         "user": "",
         "password": "",
-        "delField":"delFlag",
-        "delFieldFlag":"1",
-        "rollingPolicy":{
-          "workDir":"hdfs://cmb01:8020/user/work/bigdata/hive",
+        "delField": "delFlag",
+        "delFieldFlag": "1",
+        "rollingPolicy": {
+          "workDir": "hdfs://cmb01:8020/user/work/bigdata/hive",
           "rolloverEnable": false,
-          "maxPartSize":128,
-          "rolloverInterval":60,
-          "inactivityInterval":60
+          "maxPartSize": 128,
+          "rolloverInterval": 60,
+          "inactivityInterval": 60
         }
       }
     }
   ],
-  "source": [
+  "sources": [
     {
-      "storeType":"KAFKA",
-      "sourceConfig":{
+      "storeType": "KAFKA",
+      "sourceConfig": {
         "servers": "localhost:9092",
         "groupId": "grouoId02",
         "topic": "flink_topic2",
-        "config":{
-
+        "config": {
         }
       }
     }

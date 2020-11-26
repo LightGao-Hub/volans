@@ -10,6 +10,8 @@ import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingCon
 import com.haizhi.volans.loader.scala.executor.{ErrorExecutor, FileExecutor, StreamingExecutor}
 import com.haizhi.volans.loader.scala.operator.KeyedStateFunction
 import com.haizhi.volans.sink.component._
+import com.haizhi.volans.sink.config.constant.CoreConstants
+import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue}
 import config.schema.Keys
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.serialization.{SimpleStringEncoder, SimpleStringSchema}
@@ -38,6 +40,8 @@ object StartFlinkLoader {
 
   def main(args: Array[String]): Unit = {
     try {
+      /*System.setProperty("HADOOP_USER_NAME", "work")
+      System.setProperty("user.name", "work")*/
       // 加载参数
       initArgsExecutor(args)
       //sinks参数解析
@@ -71,7 +75,10 @@ object StartFlinkLoader {
       val sinksList: List[Sink] = SinkContext.getSinks()
       sinksList.foreach(sink => {
         if (sink.isInstanceOf[HiveSink]) {
-          stream.flatMap(_.toIterable).addSink(sink.build("")).uid(sink.uid)
+          val avroSchema = sink.config.getProperty(CoreConstants.AVRO_SCHEMA)
+          stream.flatMap(_.toIterable)
+            .map(new AvroConvertMapFunction(avroSchema))
+            .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
         } else {
           val richSink = sink.build(Iterable(""))
           stream.addSink(richSink).uid(sink.uid)
@@ -124,7 +131,7 @@ object StartFlinkLoader {
     //设置全局并行度
     env.setParallelism(streamingConfig.flinkConfig.parallelism)
     //设置检查点，默认异步提交，使用FS作为状态后端
-    val stateBackend: StateBackend = new FsStateBackend(streamingConfig.checkPoint)
+    val stateBackend: StateBackend = new FsStateBackend(streamingConfig.flinkConfig.checkPoint)
     env.setStateBackend(stateBackend)
     // 每 1000ms * 60 开始一次 checkpoint
     env.enableCheckpointing(streamingConfig.flinkConfig.checkpointInterval)
