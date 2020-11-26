@@ -6,14 +6,10 @@ import org.apache.commons.lang3.StringUtils
 import scala.collection.JavaConversions._
 
 /**
-  * Created by zhuhan on 2019/8/8.
-  */
-case class SchemaVo(id: java.lang.Long,
-                    graphId: java.lang.Long,
-                    name: String,
+ * Created by zhuhan on 2019/8/8.
+ */
+case class SchemaVo(name: String,
                     `type`: String,
-                    useGdb: String,
-                    useSearch: String,
                     fields: java.util.Map[String, SchemaFieldVo]) {
 
   def getScalaFields: Map[String, SchemaFieldVo] = {
@@ -24,7 +20,7 @@ case class SchemaVo(id: java.lang.Long,
     StringUtils.equalsIgnoreCase(Keys.VERTEX, `type`)
   }
 
-  def isEdge():Boolean ={
+  def isEdge(): Boolean = {
     !isVertex()
   }
 }

@@ -130,6 +130,7 @@ class HiveDao extends Serializable {
    */
   def addPartition(table: Table, values: java.util.List[String], partitionLocation: String): Unit = {
     val partition = new Partition()
+    // table StorageDescriptor深拷贝
     val partitionSd = table.getSd.deepCopy()
     partitionSd.setLocation(table.getSd.getLocation + partitionLocation)
     partition.setSd(partitionSd)
@@ -138,6 +139,7 @@ class HiveDao extends Serializable {
     partition.setTableName(table.getTableName)
     partition.setCreateTime((new Date().getTime / 1000).toInt)
     partition.setLastAccessTime(0)
+    logger.info(s"添加分区$partition")
     client.add_partition(partition)
   }
 

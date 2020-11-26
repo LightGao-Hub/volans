@@ -283,20 +283,20 @@ object CombineFileJob extends Thread {
   }
 
   override def run(): Unit = {
+    // 表数据存储路径
+    val tableLocation = table.getSd.getLocation
+    logger.info(s"表存储路径：$tableLocation")
+    // 表分区信息
+    val partitionKeys = hiveDao.getPartitionKeys(table)
+    val combinerVo = storeConfig.rollingPolicy
     while (true) {
       try {
-        // 表数据存储路径
-        val tableLocation = table.getSd.getLocation
-        logger.info(s"表存储路径：$tableLocation")
-        // 表分区信息
-        val partitionKeys = hiveDao.getPartitionKeys(table)
-        val combinerVo = storeConfig.rollingPolicy
-
         /**
          * 第一次启动时，处理上次程序退出未完成的文件
          */
         if (firstLaunchFlag) {
           logger.info("首次启动Job，开始处理上次未完成的文件...")
+          println("首次启动Job，开始处理上次未完成的文件...")
           if (!HDFSUtils.exists(combinerVo.workDir)) {
             HDFSUtils.mkdirs(combinerVo.workDir)
           }
@@ -311,13 +311,18 @@ object CombineFileJob extends Thread {
               for (unSolvedMergedFile <- unSolvedMergedList) {
                 val partitionName = unSolvedMergedFile.getName.split("-part-")(0).replaceAll("_", "/")
                 val partitionLocation = tableLocation + "/" + partitionName
+                val partitionValues = partitionName
+                  .split(java.io.File.separator)
+                  .map(_.split("=")(1))
+                  .toList
+                  .asJava
                 // 检查分区HDFS路径是否存在
                 if (!HDFSUtils.exists(partitionLocation)) {
                   try {
                     // 创建分区
-                    hiveDao.addPartition(table, partitionKeys.asJava, "/" + partitionName)
+                    hiveDao.addPartition(table, partitionValues, "/" + partitionName)
                   } catch {
-                    case e: AlreadyExistsException => logger.warn(s"partition [/${partitionName}] already exists")
+                    case e: AlreadyExistsException => logger.warn(s"分区 [/${partitionName}]已经存在")
                   }
                 }
                 // 移动文件到分区目录
@@ -331,7 +336,7 @@ object CombineFileJob extends Thread {
 
         // 处理分区文件
         if (partitionKeys.length > 0) {
-          // 查找包含文件但不包含子目录的分区目录
+          // 查找分区目录(包含文件且不包含子目录)
           val matchedPartitionDirList = HDFSUtils.listDirectoryWithoutSubDir(new Path(combinerVo.workDir), partitionKeys)
           logger.info(s"获取分区目录: $matchedPartitionDirList")
           matchedPartitionDirList.map(targetDir => {
@@ -343,11 +348,20 @@ object CombineFileJob extends Thread {
             if (_mergedFileList != null && _mergedFileList.size > 0) {
               val partitionLocPostFix = targetDir.toString.substring(tableLocation.length)
               val partitionLocation = tableLocation + partitionLocPostFix
-              // 如果分区HDFS路径是否存在，则创建分区
+              /**
+               * 获取分区value列表, Example: /year=2020/month=11 => [2020,11]
+               */
+              val partitionValues = partitionLocPostFix
+                .substring(1)
+                .split(java.io.File.separator)
+                .map(_.split("=")(1))
+                .toList
+                .asJava
+              // 如果分区HDFS路径不存在，则创建分区
               if (!HDFSUtils.exists(partitionLocation)) {
                 try {
                   logger.info(s"分区路径[$partitionLocation]不存在，创建分区")
-                  hiveDao.addPartition(table, partitionKeys.asJava, partitionLocPostFix)
+                  hiveDao.addPartition(table, partitionValues, partitionLocPostFix)
                 } catch {
                   case e: AlreadyExistsException => logger.warn(s"分区[$partitionLocPostFix]已经存在")
                 }
@@ -362,12 +376,11 @@ object CombineFileJob extends Thread {
             }
           })
         } else {
-          // 处理非分区文件
           logger.info("处理非分区文件")
           val mergedFileList = combineFile(storeConfig, combiner, new Path(combinerVo.workDir), false)
           // 移动合并后的文件到目标表仓库路径下
           if (mergedFileList.size > 0) {
-            logger.info("移动文件到目录")
+            logger.info(s"移动文件到表存储目录[$tableLocation]")
             HDFSUtils.moveFiles(mergedFileList, tableLocation)
           }
         }

@@ -4,7 +4,7 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import java.util.Properties
 
-import com.haizhi.volans.sink.combiner.CombineFileJob
+import com.haizhi.volans.sink.combiner.{CombineFileJob, CommitFileJob}
 import com.haizhi.volans.sink.config.constant.{HiveStoreType, StoreType}
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreHiveConfig
@@ -56,6 +56,7 @@ class HiveSink(override var storeType: StoreType,
 
   /**
    * 构建HiveSink
+   *
    * @return
    */
   private def buildHiveSink: StreamingFileSink[GenericRecord] = {
@@ -95,11 +96,11 @@ class HiveSink(override var storeType: StoreType,
     }
 
     // 工作目录
-    var workDir = new Path(storeConfig.rollingPolicy.workDir)
-//    if (!storeConfig.rollingPolicy.rolloverEnable) {
-//      // 如果不开启文件滚动策略，默认工作目录为表数据存储路径
-//      workDir = new Path(table.getSd.getLocation)
-//    }
+    val workDir = new Path(storeConfig.rollingPolicy.workDir)
+    //    if (!storeConfig.rollingPolicy.rolloverEnable) {
+    //      // 如果不开启文件滚动策略，默认工作目录为表数据存储路径
+    //      workDir = new Path(table.getSd.getLocation)
+    //    }
 
     var streamSink: StreamingFileSink[GenericRecord] = null
 
@@ -140,9 +141,13 @@ class HiveSink(override var storeType: StoreType,
     }
 
     if (storeConfig.rollingPolicy.rolloverEnable) {
-      // 启动后台线程合并小文件
+      // 启动文件合并线程
       CombineFileJob.init(storeConfig)
       CombineFileJob.start()
+    } else {
+      // 启动文件提交线程，不合并文件
+      CommitFileJob.init(storeConfig)
+      CommitFileJob.start()
     }
     streamSink
   }
