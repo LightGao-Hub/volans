@@ -106,19 +106,11 @@
         </dependency>
         <!--flink parquet end-->
 
-        <!--flink orc start-->
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-orc_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
-        <!--flink orc end-->
-
         <!--orc start-->
         <dependency>
             <groupId>org.apache.orc</groupId>
             <artifactId>orc-core</artifactId>
-            <version>1.5.0</version>
+            <version>1.6.2</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.hadoop</groupId>
@@ -136,21 +128,14 @@
         </dependency>
         <!--ord end-->
 
-
-        <!--flink hive start-->
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-hive_${scala.binary.version}</artifactId>
-            <version>${flink.version}</version>
-            <scope>${scope.version}</scope>
-        </dependency>
-
+        <!--hive start-->
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
             <version>${hive.version}</version>
-<!--            <scope>${scope.version}</scope>-->
+            <!--            <scope>${scope.version}</scope>-->
         </dependency>
+        <!--hive start-->
 
         <!--<dependency>
             <groupId>org.apache.hive</groupId>
