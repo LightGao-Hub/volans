@@ -84,32 +84,37 @@ object CombineFileJob extends Thread {
     val tempDir = workDir + "/.working"
     val fileStatusList = HDFSUtils.listFileStatus(tempDir)
     // 文件列表
-    val fileList = fileStatusList.filter(_.isFile)
+    val unSolvedFileList = fileStatusList.filter(_.isFile)
     // 目录列表
-    val dirList = fileStatusList.filter(_.isDirectory)
+    val unSolvedDirList = fileStatusList.filter(_.isDirectory)
     // 待合并文件列表
     var mergingFileList = new ListBuffer[Path]
-    for (dir <- dirList) {
+    for (unSolvedDir <- unSolvedDirList) {
       // 获取文件时间戳
-      val fmtTime = dir.getPath.getName.replaceAll(".*stage-", "")
-      val filterList = fileList.filter(_.getPath.getName.contains(fmtTime))
+      val fmtTime = unSolvedDir.getPath.getName.replaceAll(".*stage-", "")
+      val filterList = unSolvedFileList.filter(_.getPath.getName.contains(fmtTime))
       if (filterList.size > 0) {
         // 已合并但未移动到Hive仓库目录的文件，删除stage目录
-        HDFSUtils.deleteDirectory(dir.getPath, true)
+        HDFSUtils.deleteDirectory(unSolvedDir.getPath, true)
       } else {
-        val fileList = HDFSUtils.listFileStatus(dir.getPath)
-        val mergingFile = fileList.filter(_.getPath.getName.endsWith(STATE_MERGING)).head
-        // 上一个stage未完成合并文件操作，需要删除.merging文件并重跑任务
-        if (mergingFile != null) {
-          HDFSUtils.deleteFile(mergingFile.getPath)
+        // 获取上次stage目录中未合并的文件
+        val fileListInLastStage = HDFSUtils.listFileStatus(unSolvedDir.getPath)
+        if (fileListInLastStage != null && fileListInLastStage.size > 0) {
+          val mergingFile = fileListInLastStage.filter(_.getPath.getName.endsWith(STATE_MERGING))
+          // 上一个stage未完成合并文件操作，需要删除.merging文件并重跑任务
+          if (mergingFile != null && mergingFile.size > 0) {
+            HDFSUtils.deleteFile(mergingFile.head.getPath)
+          }
+          mergingFileList ++= fileListInLastStage.filter(!_.getPath.getName.endsWith(STATE_MERGING)).map(_.getPath)
         }
-        mergingFileList ++= fileList.filter(!_.getPath.getName.endsWith(STATE_MERGING)).map(_.getPath)
       }
     }
-    val mergedFileList = new ListBuffer[Path] ++= fileList.map(_.getPath)
+    val mergedFileList = new ListBuffer[Path] ++= unSolvedFileList.map(_.getPath)
     if (mergingFileList.size > 0) {
+      // 获取分区名称
+      val partitionName = getPartitionNameFromPath(mergingFileList.head, workDir + "/.working", isPartitioned, true)
       // 合并文件
-      mergedFileList += mergeFile(mergingFileList.toList, workDir, combiner, isPartitioned)
+      mergedFileList += mergeFile(mergingFileList.toList, workDir, combiner, partitionName)
       // 删除临时文件
       HDFSUtils.deleteDirectory(mergingFileList.head.getParent, true)
     }
@@ -122,10 +127,10 @@ object CombineFileJob extends Thread {
    * @param mergingFileList 待合并文件列表
    * @param workDir         工作路径
    * @param combiner        combiner
-   * @param isPartitoned    分区表标识
+   * @param partitionName   分区字段
    * @return destFile
    */
-  def mergeFile(mergingFileList: List[Path], workDir: String, combiner: Combiner, isPartitoned: Boolean): Path = {
+  def mergeFile(mergingFileList: List[Path], workDir: String, combiner: Combiner, partitionName: String): Path = {
     val fmtTime = DateUtils.formatCurrentDate("yyyyMMddHHmmss")
     /**
      * 每一批文件合并任务目录(stage)
@@ -136,11 +141,13 @@ object CombineFileJob extends Thread {
     HDFSUtils.mkdirs(tmpDir)
 
     var stageTaskDir = tmpDir + "/stage-" + fmtTime
-    var partitionName = ""
-    if (isPartitoned) {
-      val dirName = mergingFileList.head.getParent.toString
-      partitionName = dirName.substring(workDir.length + 1).split("/").mkString("_") + "-"
-      stageTaskDir = tmpDir + "/" + partitionName + "stage-" + fmtTime
+    if (partitionName != null || !"".equals(partitionName)) {
+      stageTaskDir = new StringBuilder()
+        .append(tmpDir)
+        .append("/")
+        .append(partitionName)
+        .append("-stage-")
+        .append(fmtTime).toString
       // Example: ${workDir}/.working/year=2020_month=11_day=05-stage-20201105160000
     }
     logger.info(s"创建stage目录：$stageTaskDir")
@@ -155,7 +162,7 @@ object CombineFileJob extends Thread {
     var preFix = new StringBuilder()
       .append(stageTaskDir).append("/")
       .append(partitionName)
-      .append("part-")
+      .append("-part-")
       .append(fmtTime)
       .append(".")
       .append(combiner.getStoreType())
@@ -170,7 +177,7 @@ object CombineFileJob extends Thread {
     preFix = new StringBuilder().append(tmpDir)
       .append(java.io.File.separator)
       .append(partitionName)
-      .append("part-")
+      .append("-part-")
       .append(fmtTime)
       .append(".")
       .append(combiner.getStoreType())
@@ -231,7 +238,9 @@ object CombineFileJob extends Thread {
           logger.info(s"文件大小超过$rollSize，开始合并文件...")
           val mergingList = mergingFileList.map(_.getPath).toList
           logger.info(s"待合并文件列表: $mergingFileList")
-          val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, isPartitioned)
+          // 获取分区名称
+          val partitionName = getPartitionNameFromPath(mergingList.head, combinerVo.workDir, isPartitioned, false)
+          val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, partitionName)
           mergedFileList.append(mergedFile)
           // 重置条件
           rollSizeCount = 0L
@@ -266,20 +275,47 @@ object CombineFileJob extends Thread {
         num += 1
         if (num % batchSize == 0) {
           val mergingList = tempMergingList.toList
-          val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, isPartitioned)
+          // 获取分区名称
+          val partitionName = getPartitionNameFromPath(mergingList.head, combinerVo.workDir, isPartitioned, false)
+          val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, partitionName)
           mergedFileList.append(mergedFile)
           tempMergingList.clear()
         }
       }
       if (tempMergingList.size > 0) {
         val mergingList = tempMergingList.toList
-        val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, isPartitioned)
+        // 获取分区名称
+        val partitionName = getPartitionNameFromPath(mergingList.head, combinerVo.workDir, isPartitioned, false)
+        val mergedFile = mergeFile(mergingList, combinerVo.workDir, combiner, partitionName)
         mergedFileList.append(mergedFile)
       }
       sortedFileStatusList = sortedFileStatusList.filter(currentTimeStamp - _.getModificationTime < rollInterval)
     }
 
     mergedFileList.toList
+  }
+
+  /**
+   * 从路径中获取分区名称
+   *
+   * @param mergingFile   待合并文件
+   * @param workDir       工作目录
+   * @param isPartitioned 分区标识
+   * @param recoverable   重启标识
+   * @return
+   */
+  def getPartitionNameFromPath(mergingFile: Path, workDir: String, isPartitioned: Boolean, recoverable: Boolean): String = {
+    var partitionName: String = null
+    if (isPartitioned) {
+      // 重启恢复后，获取分区文件名
+      if (recoverable) {
+        //hdfs://nameservice1/user/work/bigdata_test/person_orc/.working/country=America_province=Paris-stage-20201127112329/part-0-1
+        partitionName = mergingFile.getParent.getName.replaceAll("\\-stage\\-.*", "")
+      } else {
+        partitionName = mergingFile.getParent.toString.substring(workDir.length + 1).split("/").mkString("_")
+      }
+    }
+    partitionName
   }
 
   override def run(): Unit = {
@@ -291,12 +327,14 @@ object CombineFileJob extends Thread {
     val combinerVo = storeConfig.rollingPolicy
     while (true) {
       try {
+        // 先休眠
+        Thread.sleep(jobInterval)
+
         /**
          * 第一次启动时，处理上次程序退出未完成的文件
          */
         if (firstLaunchFlag) {
           logger.info("首次启动Job，开始处理上次未完成的文件...")
-          println("首次启动Job，开始处理上次未完成的文件...")
           if (!HDFSUtils.exists(combinerVo.workDir)) {
             HDFSUtils.mkdirs(combinerVo.workDir)
           }
@@ -325,8 +363,12 @@ object CombineFileJob extends Thread {
                     case e: AlreadyExistsException => logger.warn(s"分区 [/${partitionName}]已经存在")
                   }
                 }
+                if (!HDFSUtils.exists(partitionLocation)) {
+                  HDFSUtils.mkdirs(partitionLocation)
+                }
                 // 移动文件到分区目录
-                HDFSUtils.moveFile(unSolvedMergedFile, tableLocation)
+                logger.info("移动文件到分区目录")
+                HDFSUtils.moveFile(unSolvedMergedFile, partitionLocation)
               }
             } else {
               HDFSUtils.moveFiles(unSolvedMergedList, tableLocation)
@@ -346,7 +388,7 @@ object CombineFileJob extends Thread {
             val _mergedFileList = record._2
             logger.info(s"分区目录[$targetDir]，已合并文件列表[${_mergedFileList}]")
             if (_mergedFileList != null && _mergedFileList.size > 0) {
-              val partitionLocPostFix = targetDir.toString.substring(tableLocation.length)
+              val partitionLocPostFix = targetDir.toString.substring(combinerVo.workDir.length)
               val partitionLocation = tableLocation + partitionLocPostFix
               /**
                * 获取分区value列表, Example: /year=2020/month=11 => [2020,11]
@@ -386,10 +428,10 @@ object CombineFileJob extends Thread {
         }
         // 修改首次处理任务的标识
         firstLaunchFlag = false
-        Thread.sleep(jobInterval)
       } catch {
         case e: Exception => {
           logger.error(e.getMessage, e)
+          e.printStackTrace()
         }
       }
     }
