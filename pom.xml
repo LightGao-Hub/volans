@@ -36,6 +36,12 @@
     <scope.version>provided</scope.version>
   </properties>
 
+  <!--
+    开发模中选中add-dependencies-for-IDEA 模式
+    其他模块中如有需要打包的jar包，则不加<scop> 标签，默认打包
+    不需要打包的依赖需要用<scop>控制
+    注意：install其他模块时，会受到<scop>标签影响
+   -->
   <profiles>
     <profile>
       <id>add-dependencies-for-IDEA</id>
