@@ -41,8 +41,8 @@ object StartFlinkLoader {
 
   def main(args: Array[String]): Unit = {
     try {
-      System.setProperty("HADOOP_USER_NAME", "work")
-      System.setProperty("user.name", "work")
+      /*System.setProperty("HADOOP_USER_NAME", "work")
+      System.setProperty("user.name", "work")*/
       // 加载参数
       initArgsExecutor(args)
       //sinks参数解析
