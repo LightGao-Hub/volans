@@ -6,7 +6,7 @@ import com.haizhi.volans.sink.config.constant.HiveStoreType
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, StorageDescriptor, Table}
+import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, Table}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
