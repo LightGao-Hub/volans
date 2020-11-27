@@ -2,16 +2,15 @@ package com.haizhi.volans.loader.scala.executor
 
 /**
  * 流式执行配置类
- * @param errorExecutor 异常执行器
  */
-case class StreamingExecutor(errorExecutor: ErrorExecutor,
+case class StreamingExecutor(logExecutor: LogExecutor,
                              dirtyExecutor: DirtyExecutor) {
 
   /**
    * 循环启动
    */
   def forInit(): Unit = {
-    errorExecutor.init()
+    logExecutor.init()
     dirtyExecutor.init()
   }
 
@@ -19,7 +18,7 @@ case class StreamingExecutor(errorExecutor: ErrorExecutor,
    * 循环关闭
    */
   def forClose(): Unit = {
-    errorExecutor.close()
+    logExecutor.close()
     dirtyExecutor.close()
   }
 

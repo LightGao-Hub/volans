@@ -2,10 +2,9 @@ package com.haizhi.volans.loader.scala.config.check
 
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
-import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
 import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
-import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
-import com.haizhi.volans.loader.scala.executor.{DirtyExecutor, ErrorExecutor, FileExecutor, StreamingExecutor}
+import com.haizhi.volans.loader.scala.config.streaming.error._
+import com.haizhi.volans.loader.scala.executor._
 import com.hzxt.volans.loader.java.StoreType
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -22,24 +21,24 @@ object StreamingExecutorHelper {
    * @return
    */
   def buildExecutors(streamingConfig: StreamingConfig): StreamingExecutor = {
-    val errorExecutor = getErrorExecutor(streamingConfig.errorSink)
-    LOG.info(s" errorExecutor = $errorExecutor")
-    val dirtyExecutor = getDirtyExecutor(streamingConfig.dirtySink)
+    val logExecutor = getLogExecutor(streamingConfig.errorInfo.logInfo)
+    LOG.info(s" errorExecutor = $logExecutor")
+    val dirtyExecutor = getDirtyExecutor(streamingConfig.errorInfo.dirtyData)
     LOG.info(s" dirtyExecutor = $dirtyExecutor")
-    StreamingExecutor(errorExecutor, dirtyExecutor)
+    StreamingExecutor(logExecutor, dirtyExecutor)
   }
 
-  def getErrorExecutor(errorSink: ErrorSink): ErrorExecutor = {
-    errorSink.storeType match {
-      case StoreType.FILE => FileExecutor(errorSink.errorConfig.asInstanceOf[FileConfig])
-      case _ => throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} getErrorExecutor [${errorSink.storeType}] 类型不存在 ")
+  def getLogExecutor(logInfo: LogInfo): LogExecutor = {
+    logInfo.storeType match {
+      case StoreType.FILE => FileExecutor(logInfo.logInfoConfig.asInstanceOf[FileConfig])
+      case _ => throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} getErrorExecutor [${logInfo.storeType}] 类型不存在 ")
     }
   }
 
-  def getDirtyExecutor(dirtySink: DirtySink): DirtyExecutor = {
-    dirtySink.storeType match {
-      case StoreType.FILE => FileExecutor(dirtySink.dirtyConfig.asInstanceOf[FileConfig])
-      case _ => throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} getDirtyExecutor [${dirtySink.storeType}] 类型不存在 ")
+  def getDirtyExecutor(dirtyData: DirtyData): DirtyExecutor = {
+    dirtyData.storeType match {
+      case StoreType.FILE => FileExecutor(dirtyData.dirtyConfig.asInstanceOf[FileConfig])
+      case _ => throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} getDirtyExecutor [${dirtyData.storeType}] 类型不存在 ")
     }
   }
 

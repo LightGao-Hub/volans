@@ -1,8 +1,7 @@
 package com.haizhi.volans.loader.scala.config.streaming
 
 import com.haizhi.volans.loader.scala.config.schema.SchemaVo
-import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
-import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
+import com.haizhi.volans.loader.scala.config.streaming.error.ErrorInfo
 import com.haizhi.volans.loader.scala.config.streaming.flink.FlinkConfig
 import com.haizhi.volans.loader.scala.config.streaming.source.{KafkaSourceConfig, Source}
 
@@ -13,8 +12,7 @@ import com.haizhi.volans.loader.scala.config.streaming.source.{KafkaSourceConfig
 case class StreamingConfig(source: Source,
                            sinks: String,
                            schemaVo: SchemaVo,
-                           errorSink: ErrorSink,
-                           dirtySink: DirtySink,
+                           errorInfo: ErrorInfo,
                            flinkConfig: FlinkConfig) {
 
 }

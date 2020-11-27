@@ -1,6 +1,6 @@
 package com.haizhi.volans.loader.scala.config.schema
 
-import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
+import com.haizhi.volans.loader.scala.config.streaming.error.LogInfo
 
 /**
  * source端数据属性集
@@ -39,5 +39,5 @@ object Keys {
   //affected_store参数是异常中处理脏数据的下游sinks以逗号分割的字符串，供前端展示
   var affected_store: String = ""
   //寄存errorSink，为了解决异常信息打印
-  var errorSink: ErrorSink = _
+  var logInfo: LogInfo = _
 }

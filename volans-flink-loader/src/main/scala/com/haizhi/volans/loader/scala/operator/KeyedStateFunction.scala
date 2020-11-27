@@ -1,13 +1,10 @@
 package com.haizhi.volans.loader.scala.operator
 
-import java.{lang, util}
+import java.util
 
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
-import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.loader.scala.config.check.CheckValueConversion
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
-import com.haizhi.volans.loader.scala.config.parameter.Parameter
-import com.haizhi.volans.loader.scala.config.schema.SchemaFieldVo
 import com.haizhi.volans.loader.scala.config.streaming.StreamingConfig
 import org.apache.flink.api.common.state.{ListState, ListStateDescriptor, ValueState, ValueStateDescriptor}
 import org.apache.flink.api.scala._
@@ -20,7 +17,6 @@ import org.apache.flink.util.Collector
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable.ArrayBuffer
 
 /**
  * 自定义keybeFunction核心类
@@ -128,8 +124,8 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
         //度量增加
         dirty_counter.inc()
         //开启脏数据记录 且 脏数据量小于errorStoreRowsLimit，将脏数据输出
-        if (streamingConfig.dirtySink.errorStoreEnabled && (dirtyCount.value() * streamingConfig.flinkConfig.parallelism) <=
-          streamingConfig.dirtySink.errorStoreRowsLimit)
+        if (streamingConfig.errorInfo.dirtyData.storeEnabled && (dirtyCount.value() * streamingConfig.flinkConfig.parallelism) <=
+          streamingConfig.errorInfo.dirtyData.storeRowsLimit)
           ctx.output(freezingAlarmOutput, tuple._1)
         //然后将脏数据删除
         iter.remove()
@@ -143,10 +139,10 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
     dataList.clear()
     flagTime.update(false)
     //如果脏数据设置errorMode模式>=0 且脏数据个数大于规定则程序结束
-    if (streamingConfig.dirtySink.errorMode >= 0 &&
-      (dirtyCount.value() * streamingConfig.flinkConfig.parallelism > streamingConfig.dirtySink.errorMode))
+    if (streamingConfig.errorInfo.dirtyData.handleMode >= 0 &&
+      (dirtyCount.value() * streamingConfig.flinkConfig.parallelism > streamingConfig.errorInfo.dirtyData.handleMode))
       throw new VolansCheckException(s"${ErrorCode.DIRTY_COUNT_ERROR}${ErrorCode.PATH_BREAK}  " +
-        s"脏数据超出 errorMode [${streamingConfig.dirtySink.errorMode}] 限制")
+        s"脏数据超出 errorMode [${streamingConfig.errorInfo.dirtyData.handleMode}] 限制")
   }
 
 }

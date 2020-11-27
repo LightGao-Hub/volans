@@ -5,7 +5,8 @@ import org.apache.commons.lang3.StringUtils
 /**
   * Created by zhuhan on 2019/8/8.
   */
-case class SchemaFieldVo(name: String,
+case class SchemaFieldVo(sourceName: String,
+                         targetName: String,
                          `type`: String,
                          var isMain: String = "N") {
 

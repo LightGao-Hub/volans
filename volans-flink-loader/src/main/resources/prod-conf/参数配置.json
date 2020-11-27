@@ -1,23 +1,25 @@
 {
-  "dirtySink": {
-    "storeType": "file",
-    "errorMode": -1,
-    "errorStoreEnabled": true,
-    "errorStoreRowsLimit": 30000,
-    "inboundTaskId": "7083-HBASE",
-    "taskInstanceId": "7083",
-    "dirtyConfig": {
-      "path": "hdfs://nameservice1/tmp/volans2/groupId/dirty"
-    }
-  },
-  "errorSink": {
-    "storeType": "file",
-    "errorConfig": {
-      "path": "hdfs://nameservice1/tmp/volans2/groupId/taskInstanceId/error.log"
+  "errorInfo": {
+    "dirtyData": {
+      "storeType": "file",
+      "handleMode": -1,
+      "storeEnabled": true,
+      "storeRowsLimit": 30000,
+      "inboundTaskId": "7083-HBASE",
+      "taskInstanceId": "7083",
+      "config": {
+        "path": "hdfs:///tmp/volans2/groupId/taskInstanceId/dirty_data"
+      }
+    },
+    "logInfo": {
+      "storeType": "file",
+      "config": {
+        "path": "hdfs:///tmp/volans2/groupId/taskInstanceId/log_info/error.log"
+      }
     }
   },
   "taskConfig": {
-    "checkPoint": "hdfs://nameservice1/tmp/volans2/checkpoints/gourpId",
+    "checkPoint": "hdfs:///tmp/volans2/checkpoints/gourpId",
     "parallelism": 3,
     "checkpointInterval": 10000,
     "batchInterval": 10000,
@@ -30,13 +32,13 @@
       {
         "sourceName": "from_key",
         "isMain": "N",
-        "targetName": "from_key",
+        "targetName": "fromkey",
         "type": "STRING"
       },
       {
         "sourceName": "to_key",
         "isMain": "N",
-        "targetName": "to_key",
+        "targetName": "tokey",
         "type": "STRING"
       },
       {
@@ -157,7 +159,7 @@
         "delField": "delFlag",
         "delFieldFlag": "1",
         "rollingPolicy": {
-          "workDir": "hdfs://cmb01:8020/user/work/bigdata/hive",
+          "workDir": "hdfs://192.168.1.131:8020/user/work/bigdata/hive",
           "rolloverEnable": false,
           "maxPartSize": 128,
           "rolloverInterval": 60,

@@ -7,7 +7,7 @@ import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import config.check.{StreamingConfigHelper, StreamingExecutorHelper}
 import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
-import com.haizhi.volans.loader.scala.executor.{ErrorExecutor, FileExecutor, StreamingExecutor}
+import com.haizhi.volans.loader.scala.executor._
 import com.haizhi.volans.loader.scala.operator.KeyedStateFunction
 import com.haizhi.volans.sink.component._
 import com.haizhi.volans.sink.config.constant.CoreConstants
@@ -28,20 +28,21 @@ import org.apache.flink.streaming.api.{CheckpointingMode, TimeCharacteristic}
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer
 import org.slf4j.{Logger, LoggerFactory}
 import org.apache.flink.api.java.utils.ParameterTool
+
 import scala.collection.JavaConverters._
 import scala.util.Random
 
 object StartFlinkLoader {
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[StartFlinkLoader])
-  var errorExecutor: ErrorExecutor = _
+  var logExecutor: LogExecutor = _
   var streamingConfig: StreamingConfig = _
   var streamingExecutor: StreamingExecutor = _
 
   def main(args: Array[String]): Unit = {
     try {
-      /*System.setProperty("HADOOP_USER_NAME", "work")
-      System.setProperty("user.name", "work")*/
+      System.setProperty("HADOOP_USER_NAME", "work")
+      System.setProperty("user.name", "work")
       // 加载参数
       initArgsExecutor(args)
       //sinks参数解析
@@ -63,7 +64,7 @@ object StartFlinkLoader {
         .uid("process-id")
 
       // 通过侧输出流获取脏数据并输出
-      if (streamingConfig.dirtySink.errorStoreEnabled) {
+      if (streamingConfig.errorInfo.dirtyData.storeEnabled) {
         logger.info(" open errorStoreEnabled is true ")
         stream
           .getSideOutput(new OutputTag[String]("dirty-out"))
@@ -110,7 +111,7 @@ object StartFlinkLoader {
       .withPartPrefix("dirty")
       .build()
 
-    val fileConfig: FileConfig = streamingConfig.dirtySink.dirtyConfig.asInstanceOf[FileConfig]
+    val fileConfig: FileConfig = streamingConfig.errorInfo.dirtyData.dirtyConfig.asInstanceOf[FileConfig]
     val sink: StreamingFileSink[String] = StreamingFileSink
       .forRowFormat(new Path(fileConfig.path), new SimpleStringEncoder[String]("UTF-8"))
       .withBucketAssigner(new DateTimeBucketAssigner("yyyy-MM-dd")) //配置桶生成规则, 按天生成
@@ -200,7 +201,7 @@ object StartFlinkLoader {
     streamingConfig = StreamingConfigHelper.parse(path)
     //构建streamingExecutor
     streamingExecutor = StreamingExecutorHelper.buildExecutors(streamingConfig)
-    errorExecutor = streamingExecutor.errorExecutor
+    logExecutor = streamingExecutor.logExecutor
     //循环初始化
     streamingExecutor.forInit()
   }
@@ -209,12 +210,12 @@ object StartFlinkLoader {
    * 将异常信息写入errorSink
    */
   def doLogHappenError(e: Exception): Unit = {
-    val error: String = ErrorCode.toJSON(task_instance_id = Keys.taskInstanceId, code = ErrorCode.STREAMING_ERROR, message = e.getMessage)
-    logger.error(error)
-    if (errorExecutor != null) //需要用errorExceutor的errorWriter写出异常数据
-      errorExecutor.errorWriter(error)
-    else if (Keys.errorSink != null) //如果errorSink存在，代表errorSink配置后面出现了异常，可以先生成errorExcecutor
-      StreamingExecutorHelper.getErrorExecutor(Keys.errorSink).errorWriter(error)
+    val errorLog: String = ErrorCode.toJSON(task_instance_id = Keys.taskInstanceId, code = ErrorCode.STREAMING_ERROR, message = e.getMessage)
+    logger.error(errorLog)
+    if (logExecutor != null) //需要用errorExceutor的errorWriter写出异常数据
+      logExecutor.LogWriter(errorLog)
+    else if (Keys.logInfo != null) //如果errorSink存在，代表errorSink配置后面出现了异常，可以先生成errorExcecutor
+      StreamingExecutorHelper.getLogExecutor(Keys.logInfo).LogWriter(errorLog)
   }
 
   case class StartFlinkLoader()

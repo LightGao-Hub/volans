@@ -1,17 +1,19 @@
 package com.haizhi.volans.loader.scala.config.check
 
 import java.util
+
 import com.google.gson.reflect.TypeToken
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.{Parameter, SinksParameter}
-import com.haizhi.volans.loader.scala.config.schema.Keys
+import com.haizhi.volans.loader.scala.config.schema.{Keys, SchemaFieldVo}
 import com.hzxt.volans.loader.java.StoreType
 import org.apache.commons.collections.MapUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.slf4j.Logger
+
 import scala.collection.mutable
 
 /**
@@ -33,10 +35,8 @@ object CheckHelper {
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.SINKS}] Key field missing")
     if (!map.containsKey(Parameter.SCHEMA))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.SCHEMA}] Key field missing")
-    if (!map.containsKey(Parameter.DIRTY_SINK))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.DIRTY_SINK}] Key field missing")
-    if (!map.containsKey(Parameter.ERROR_SINK))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.ERROR_SINK}] Key field missing")
+    if (!map.containsKey(Parameter.ERROR_INFO))
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.ERROR_INFO}] Key field missing")
     if (!map.containsKey(Parameter.TASK_CONFIG))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  parameters  [${Parameter.TASK_CONFIG}] Key field missing")
     LOG.info(" checkMap The parameters are correct")
@@ -149,18 +149,19 @@ object CheckHelper {
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema  [${Parameter.TYPE}:${schemaMap.get(Parameter.TYPE)}] 字段类型异常，正确类型 [vertex, edge]")
     //检查fileds字段
     val fileds: AnyRef = schemaMap.get(Parameter.FIELDS)
-    val filedsMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(fileds))
-    if (filedsMap.size() == 0)
+    val filedList: util.List[SchemaFieldVo] = JSONUtils.fromJson(JSONUtils.toJson(fileds), new TypeToken[util.List[SchemaFieldVo]]() {}.getType)
+    if (filedList.size() == 0)
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   The schema [filedsMap] length is zero")
     //循环获取每个filed字段中是否包含name , type
-    val value: util.Iterator[String] = filedsMap.keySet.iterator()
+    val value: util.Iterator[SchemaFieldVo] = filedList.iterator()
     while (value.hasNext) {
-      val key: String = value.next()
-      val map1: mutable.Map[String, AnyRef] = JSONUtils.jsonToScalaMap(JSONUtils.toJson(filedsMap.get(key)))
-      if (!map1.contains(Parameter.NAME))
-        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema fileds [$key:${Parameter.NAME}] Key field missing")
-      if (!map1.contains(Parameter.TYPE))
-        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema fileds [$key:${Parameter.TYPE}] Key field missing")
+      val fieldVo: SchemaFieldVo = value.next()
+      if (StringUtils.isBlank(fieldVo.sourceName))
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema fileds [sourceName] missing")
+      if (StringUtils.isBlank(fieldVo.targetName))
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema fileds [targetName] missing")
+      if (StringUtils.isBlank(fieldVo.`type`))
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   schema fileds [type] missing")
     }
     LOG.info(" schema fileds The parameters are correct")
   }

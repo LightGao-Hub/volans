@@ -1,4 +1,4 @@
-package com.haizhi.volans.loader.scala.config.streaming.dirty
+package com.haizhi.volans.loader.scala.config.streaming.error
 
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.check.CheckHelper
@@ -9,17 +9,17 @@ import com.hzxt.volans.loader.java.StoreType
 
 /**
  * 脏数据处理sink
- * errorMode: --错误处理方式，-1表示出错继续，大于或等于0表示错误行大于该值终止
- * errorStoreEnabled: --是否开启错误信息记录
- * errorStoreRowsLimit: --限制错误信息记录条数
+ * handleMode: --错误处理方式，-1表示出错继续，大于或等于0表示错误行大于该值终止
+ * storeEnabled: --是否开启错误信息记录
+ * storeRowsLimit: --限制错误信息记录条数
  *
  * @author gl
  * @create 2020-11-02 15:07
  */
-case class DirtySink(storeType: StoreType,
-                     errorMode: Long = -1,
-                     errorStoreEnabled: Boolean = false,
-                     errorStoreRowsLimit: Long = 30000,
+case class DirtyData(storeType: StoreType,
+                     handleMode: Long = -1,
+                     storeEnabled: Boolean = false,
+                     storeRowsLimit: Long = 30000,
                      inboundTaskId: String = null,
                      taskInstanceId: String = null,
                      dirtyConfig: DirtyConfig) extends Check {

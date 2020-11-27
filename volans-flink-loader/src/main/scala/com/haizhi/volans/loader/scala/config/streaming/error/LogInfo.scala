@@ -11,7 +11,7 @@ import com.hzxt.volans.loader.java.StoreType
  * @author gl
  * @create 2020-11-02 15:03
  */
-case class ErrorSink(storeType: StoreType, var errorConfig: ErrorConfig) extends Check {
+case class LogInfo(storeType: StoreType, var logInfoConfig: LogInfoConfig) extends Check {
   //初始化校验
   check
   /**
@@ -20,7 +20,7 @@ case class ErrorSink(storeType: StoreType, var errorConfig: ErrorConfig) extends
    * @return
    */
   override def check: Unit = {
-    if (errorConfig.isEmpy)
+    if (logInfoConfig.isEmpy)
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  errorSink - errorConfig isEmpy")
   }
 }

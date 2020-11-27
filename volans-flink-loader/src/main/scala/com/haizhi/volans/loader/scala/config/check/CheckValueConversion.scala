@@ -13,7 +13,7 @@ import collection.JavaConversions._
 
 /**
  * 脏数据校验：
- * {"from_key":"123123", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"ertreter"}
+ * {"from_key":"123123", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"6686"}
  * {"from_key":"", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"object02"}
  * {"from_key":"123123","to_key":"","business_status":123.1,"address":1234,"object_key":"ertreter"}
  * {"from_key":"123123","address":1234,"object_key":"ertreter"}
@@ -29,9 +29,8 @@ import collection.JavaConversions._
 case class CheckValueConversion(config: StreamingConfig) {
   private val logger: Logger = LoggerFactory.getLogger(classOf[CheckValueConversion])
   //所有Schema集合
-  val fields: util.Map[String, SchemaFieldVo] = config.schemaVo.fields
-  val fieldSet: Set[SchemaFieldVo] = fields.values().toSet
-  val nameSet: Set[String] = fieldSet.map(_.name)
+  val fieldSet: Set[SchemaFieldVo] = config.schemaVo.fields.toSet
+  val nameSet: Set[String] = fieldSet.map(_.sourceName)
 
   //检验脏数据, false为脏数据
   def checkValue(value: String): (String, Boolean) = {
@@ -47,11 +46,11 @@ case class CheckValueConversion(config: StreamingConfig) {
     for (field <- fieldSet) {
       //如果不存在field字段 且 isMain == Y 为异常数据
       //如果field字段的值为null或者为空字符串，且 isMain == Y 为异常数据
-      if (!stringToObject.contains(field.name) && "Y".equalsIgnoreCase(field.isMain))
-        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.name} " +
+      if (!stringToObject.contains(field.sourceName) && "Y".equalsIgnoreCase(field.isMain))
+        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
           s"不存在 且 isMain ${field.isMain}") -> false
-      else if (StringUtils.isBlank(stringToObject.get(field.name).toString) && "Y".equalsIgnoreCase(field.isMain))
-        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.name} " +
+      else if (StringUtils.isBlank(stringToObject.get(field.sourceName).toString) && "Y".equalsIgnoreCase(field.isMain))
+        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
           s"字段值为空 且 isMain ${field.isMain}") -> false
     }
     logger.info(s"数据校验正确 value :$value ")
@@ -64,18 +63,19 @@ case class CheckValueConversion(config: StreamingConfig) {
     }
     //logger.info(s"删除多余字段后 value : $stringToObject")
     //类型转换
-    typeConversion(stringToObject, fields)
+    typeConversion(stringToObject, fieldSet)
   }
 
   //类型转换,false为转换异常
   def typeConversion(stringToObject: util.Map[String, Object],
-                     fields: util.Map[String, SchemaFieldVo]): (String, Boolean) = {
+                     fields: Set[SchemaFieldVo]): (String, Boolean) = {
     try {
-      val it: util.Iterator[util.Map.Entry[String, Object]] = stringToObject.entrySet.iterator
-      while (it.hasNext) {
-        val item: util.Map.Entry[String, Object] = it.next
-        val schema: SchemaFieldVo = fields.get(item.getKey)
-        item.setValue(convert(item.getValue, schema))
+      for(field <- fields) {
+        val sourceValue: Object = stringToObject.get(field.sourceName)
+        val targetValue = convert(sourceValue, field)
+        if(!field.sourceName.equals(field.targetName))
+          stringToObject.remove(field.sourceName)
+        stringToObject.put(field.targetName, targetValue)
       }
       //logger.info(s"状态修改后的 json = ${JSONUtils.toJson(stringToObject)}")
       JSONUtils.toJson(stringToObject) -> true

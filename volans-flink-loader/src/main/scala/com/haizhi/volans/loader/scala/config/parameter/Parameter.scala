@@ -8,16 +8,15 @@ package com.haizhi.volans.loader.scala.config.parameter
  */
 object Parameter {
 
-  val CONFIG:String = "config"
+  val CONFIG: String = "config"
   val STORE_TYPE: String = "storeType"
   val SOURCES: String = "sources"
   val SOURCE_CONFIG: String = "sourceConfig"
   val SINKS: String = "sinks"
   val SCHEMA: String = "schema"
-  val DIRTY_SINK: String = "dirtySink"
-  val DIRTY_CONFIG: String = "dirtyConfig"
-  val ERROR_SINK: String = "errorSink"
-  val ERROR_CONFIG: String = "errorConfig"
+  val ERROR_INFO: String = "errorInfo"
+  val DIRTY_DATA: String = "dirtyData"
+  val LOG_INFO:String = "logInfo"
   val COUNT_SINK: String = "countSink"
   val COUNT_CONFIG: String = "countConfig"
   val CHECKPOINT: String = "checkPoint"
@@ -30,9 +29,9 @@ object Parameter {
   val TYPE: String = "type"
   val IS_MAIN: String = "isMain"
 
-  val ERROR_MODE: String = "errorMode"
-  val ERROR_STORE_ENABLED: String = "errorStoreEnabled"
-  val ERROR_STORE_FOWSLIMIT: String = "errorStoreRowsLimit"
+  val HANDLE_MODE: String = "handleMode"
+  val STORE_ENABLED: String = "storeEnabled"
+  val STORE_ROWS_LIMIT: String = "storeRowsLimit"
   val INBOUND_TASKID: String = "inboundTaskId"
   val TASK_INSTANCEID: String = "taskInstanceId"
   val PATH: String = "path"

@@ -6,6 +6,6 @@ import com.haizhi.volans.loader.scala.config.streaming.Config
  * @author gl 
  * @create 2020-11-02 19:44 
  */
-trait ErrorConfig extends Config {
+trait LogInfoConfig extends Config {
 
 }

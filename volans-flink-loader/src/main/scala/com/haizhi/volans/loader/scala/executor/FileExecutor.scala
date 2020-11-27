@@ -8,7 +8,7 @@ import com.haizhi.volans.loader.scala.config.streaming.FileConfig
 import com.haizhi.volans.loader.scala.util.HDFSUtils
 import org.slf4j.{Logger, LoggerFactory}
 
-case class FileExecutor(fileConfig: FileConfig) extends ErrorExecutor with DirtyExecutor {
+case class FileExecutor(fileConfig: FileConfig) extends LogExecutor with DirtyExecutor {
 
   private val LOG: Logger =  LoggerFactory.getLogger(classOf[FileExecutor])
 
@@ -20,7 +20,7 @@ case class FileExecutor(fileConfig: FileConfig) extends ErrorExecutor with Dirty
     LOG.info(s" FileExecutor close success ")
   }
 
-  override def errorWriter(value: String): Unit = {
+  override def LogWriter(value: String): Unit = {
     LOG.info(s" errorWriter info path = ${fileConfig.path}; value = $value")
     writeFileOrHdfs(value, fileConfig.path.trim, s"${Keys.ERROR_LOG}")
     LOG.info(" errorWriter success ")
@@ -37,11 +37,11 @@ case class FileExecutor(fileConfig: FileConfig) extends ErrorExecutor with Dirty
     val newPath = pathHelper(path, s"${Keys.COUNT_LOG}")
     LOG.info(s" newPath = $newPath")
     var value: String = null
-    if (newPath.startsWith(s"${Keys.FILE_PATH}")) {
+    if (newPath.startsWith(Keys.FILE_PATH)) {
       value = FileUtil.readFileToString(newPath, s"${Keys.ENCODING}")
-    } else if (newPath.startsWith(s"${Keys.HDFS_PATH}")) {
-      value = HDFSUtils.readFileContent(newPath)
-    } else if (newPath.startsWith(s"${Keys.PATH_FLAG}")) {
+    } else if (newPath.startsWith(Keys.HDFS_PATH)) {
+      value = HDFSUtils.readFileContent(newPath.replace(Keys.HDFS_PATH, ""))
+    } else if (newPath.startsWith(Keys.PATH_FLAG)) {
       value = HDFSUtils.readFileContent(newPath)
     }
     value

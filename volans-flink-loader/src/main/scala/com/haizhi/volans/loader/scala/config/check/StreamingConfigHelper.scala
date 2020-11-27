@@ -10,9 +10,8 @@ import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.loader.scala.config.exception.VolansCheckException
 import com.haizhi.volans.loader.scala.config.parameter.Parameter
 import com.haizhi.volans.loader.scala.config.schema.{Keys, SchemaVo}
-import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig}
-import com.haizhi.volans.loader.scala.config.streaming.dirty.DirtySink
-import com.haizhi.volans.loader.scala.config.streaming.error.ErrorSink
+import com.haizhi.volans.loader.scala.config.streaming.error.{DirtyData, ErrorInfo, LogInfo}
+import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingConfig, error}
 import com.haizhi.volans.loader.scala.config.streaming.flink.FlinkConfig
 import com.haizhi.volans.loader.scala.config.streaming.sink.Sinks
 import com.haizhi.volans.loader.scala.config.streaming.source.{KafkaSourceConfig, Source}
@@ -81,13 +80,13 @@ object StreamingConfigHelper {
     //检查关键参数
     CheckHelper.checkMap(map)
     //获取error
-    val errorSink: ErrorSink = getErrorSink(map)
-    Keys.errorSink = errorSink
-    LOG.info(s" info ${errorSink.storeType} error : $errorSink")
+    val logInfo: LogInfo = getLogInfo(map)
+    Keys.logInfo = logInfo
+    LOG.info(s" info ${logInfo.storeType} error : $logInfo")
     //先获取dirty，因为后面任何异常都需要taskInstanceId参数才可展示异常
-    val dirtySink: DirtySink = getDirtySink(map)
-    Keys.taskInstanceId = dirtySink.taskInstanceId
-    LOG.info(s" info ${dirtySink.storeType} dirty : $dirtySink")
+    val dirtyData: DirtyData = getDirtyData(map)
+    Keys.taskInstanceId = dirtyData.taskInstanceId
+    LOG.info(s" info ${dirtyData.storeType} dirty : $dirtyData")
     //获取source
     val source: Source = getSource(map)
     LOG.info(s" info ${source.storeType} source, config : ${source.kafkaSourceConfig}")
@@ -102,7 +101,7 @@ object StreamingConfigHelper {
     LOG.info(s" info flinkConfig : $flinkConfig")
     LOG.info(s" info checkpoint : ${flinkConfig.checkPoint}")
 
-    StreamingConfig(source, sinksJson, schemaVo, errorSink, dirtySink, flinkConfig)
+    StreamingConfig(source, sinksJson, schemaVo, ErrorInfo(dirtyData, logInfo), flinkConfig)
   }
 
   /**
@@ -132,8 +131,9 @@ object StreamingConfigHelper {
    * @param map 全局参数map
    * @return dirtySink
    */
-  def getDirtySink(map: util.Map[String, AnyRef]): DirtySink = {
-    val dirtyMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.DIRTY_SINK)))
+  def getDirtyData(map: util.Map[String, AnyRef]): DirtyData = {
+    val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
+    val dirtyMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.DIRTY_DATA)))
     CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
     val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE))
     var typeOfT: Type = null
@@ -142,14 +142,14 @@ object StreamingConfigHelper {
     else
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} dirtySink [$storeType] 类型不存在 ")
 
-    CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.DIRTY_CONFIG), Parameter.DIRTY_CONFIG)
-    val errorMode = dirtyMap.getOrDefault(Parameter.ERROR_MODE, Long.box(-1L)).asInstanceOf[Long]
-    val errorStoreEnabled = dirtyMap.getOrDefault(Parameter.ERROR_STORE_ENABLED, Boolean.box(false)).asInstanceOf[Boolean]
-    val errorStoreRowsLimit = dirtyMap.getOrDefault(Parameter.ERROR_STORE_FOWSLIMIT, Long.box(30000)).asInstanceOf[Long]
+    CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.CONFIG), Parameter.CONFIG)
+    val handleMode = dirtyMap.getOrDefault(Parameter.HANDLE_MODE, Long.box(-1L)).asInstanceOf[Long]
+    val storeEnabled = dirtyMap.getOrDefault(Parameter.STORE_ENABLED, Boolean.box(false)).asInstanceOf[Boolean]
+    val storeRowsLimit = dirtyMap.getOrDefault(Parameter.STORE_ROWS_LIMIT, Long.box(30000)).asInstanceOf[Long]
     val inboundTaskId = dirtyMap.get(Parameter.INBOUND_TASKID).asInstanceOf[String]
     val taskInstanceId = dirtyMap.get(Parameter.TASK_INSTANCEID).asInstanceOf[String]
 
-    DirtySink(storeType, errorMode, errorStoreEnabled, errorStoreRowsLimit, inboundTaskId, taskInstanceId, JSONUtils.fromJson(JSONUtils.toJson(dirtyMap.get(Parameter.DIRTY_CONFIG)), typeOfT))
+    DirtyData(storeType, handleMode, storeEnabled, storeRowsLimit, inboundTaskId, taskInstanceId, JSONUtils.fromJson(JSONUtils.toJson(dirtyMap.get(Parameter.CONFIG)), typeOfT))
   }
 
   /**
@@ -158,17 +158,19 @@ object StreamingConfigHelper {
    * @param map 全局参数map
    * @return errorSink
    */
-  def getErrorSink(map: util.Map[String, AnyRef]): ErrorSink = {
-    val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_SINK)))
-    CheckHelper.checkNotNull(MapUtils.getString(errorMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
-    val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(errorMap, Parameter.STORE_TYPE))
+  def getLogInfo(map: util.Map[String, AnyRef]): LogInfo = {
+    val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
+    val logMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.LOG_INFO)))
+    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
+    val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(logMap, Parameter.STORE_TYPE))
     var typeOfT: Type = null
     if (storeType == StoreType.FILE)
       typeOfT = new TypeToken[FileConfig]() {}.getType
     else
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} errorSink [$storeType] 类型不存在 ")
-    CheckHelper.checkNotNull(MapUtils.getString(errorMap, Parameter.ERROR_CONFIG), Parameter.ERROR_CONFIG, taskId = Keys.taskInstanceId)
-    ErrorSink(storeType, JSONUtils.fromJson(JSONUtils.toJson(errorMap.get(Parameter.ERROR_CONFIG)), typeOfT))
+    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.CONFIG), Parameter.CONFIG, taskId = Keys.taskInstanceId)
+    val value:FileConfig = JSONUtils.fromJson(JSONUtils.toJson(logMap.get(Parameter.CONFIG)), typeOfT)
+    LogInfo(storeType, value)
   }
 
   /**
