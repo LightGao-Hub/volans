@@ -15,6 +15,7 @@ extLibInfo="$hiveStorageJar$extLibInfo"
 # $1 保存点路径
 flink run \
 $extLibInfo \
+-d \
 -s $1 \
 -m localhost:8081 \
 -c com.haizhi.volans.loader.scala.StartFlinkLoader \

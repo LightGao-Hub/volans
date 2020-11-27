@@ -25,4 +25,3 @@ $extLibInfo \
 -c com.haizhi.volans.loader.scala.StartFlinkLoader \
 $LIB_HOME/volans-flink-loader-1.0.0.jar \
 -input $1
-flink run -m yarn-cluster -p 3 -yjm 1024m -ytm 1024m -ys 1 -c com.haizhi.volans.loader.scala.StartFlinkLoader volans-flink-loader-1.0.0.jar -input /home/gaoliang/volans/configure.json
