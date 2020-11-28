@@ -46,10 +46,11 @@ case class CheckValueConversion(config: StreamingConfig) {
     for (field <- fieldSet) {
       //如果不存在field字段 且 isMain == Y 为异常数据
       //如果field字段的值为null或者为空字符串，且 isMain == Y 为异常数据
+      val fieldV = stringToObject.getOrDefault(field.sourceName, null)
       if (!stringToObject.contains(field.sourceName) && "Y".equalsIgnoreCase(field.isMain))
         return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
           s"不存在 且 isMain ${field.isMain}") -> false
-      else if (StringUtils.isBlank(stringToObject.get(field.sourceName).toString) && "Y".equalsIgnoreCase(field.isMain))
+      else if ((fieldV == null || StringUtils.isBlank(fieldV.toString)) && "Y".equalsIgnoreCase(field.isMain))
         return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
           s"字段值为空 且 isMain ${field.isMain}") -> false
     }
