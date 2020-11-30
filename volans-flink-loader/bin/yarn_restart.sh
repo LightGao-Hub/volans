@@ -17,6 +17,7 @@ flink run \
 $extLibInfo \
 -yt $LIB_HOME \
 -d \
+-yD classloader.resolve-order=parent-first  \
 -s $1 \
 -m yarn-cluster \
 -p 3 \
