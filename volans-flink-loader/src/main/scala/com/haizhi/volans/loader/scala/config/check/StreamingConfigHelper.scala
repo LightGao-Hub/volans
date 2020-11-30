@@ -67,6 +67,7 @@ object StreamingConfigHelper {
 
   def getSchema(map: util.Map[String, AnyRef]): SchemaVo = {
     val schemaVo: SchemaVo = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SCHEMA)), new TypeToken[SchemaVo]() {}.getType)
+    schemaVo.check
     schemaVo
   }
 

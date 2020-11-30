@@ -70,8 +70,6 @@ object CheckHelper {
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   HIVE sink  [${SinksParameter.DATABASE}] Key field missing")
     if (!map.containsKey(SinksParameter.TABLE))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   HIVE sink  [${SinksParameter.TABLE}] Key field missing")
-    if (!map.containsKey(SinksParameter.DEL_FIELD))
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   HIVE sink  [${SinksParameter.DEL_FIELD}] Key field missing")
     LOG.info(" checkHive The parameters are correct")
   }
 

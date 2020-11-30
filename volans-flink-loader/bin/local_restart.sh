@@ -16,6 +16,7 @@ extLibInfo="$hiveStorageJar$extLibInfo"
 flink run \
 $extLibInfo \
 -d \
+-D classloader.resolve-order=parent-first  \
 -s $1 \
 -m localhost:8081 \
 -c com.haizhi.volans.loader.scala.StartFlinkLoader \
