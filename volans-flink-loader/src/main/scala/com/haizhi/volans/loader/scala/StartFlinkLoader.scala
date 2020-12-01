@@ -80,8 +80,12 @@ object StartFlinkLoader {
           stream.flatMap(_.toIterable)
             .map(new AvroConvertMapFunction(avroSchema))
             .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
+        } else if (sink.isInstanceOf[FileHandleSink]) {
+          stream.addSink(sink.build(GenericFuncValue.ITERABLE_STRING))
+            .uid(sink.uid)
+            .setParallelism(1)
         } else {
-          val richSink = sink.build(Iterable(""))
+          val richSink = sink.build(GenericFuncValue.ITERABLE_STRING)
           stream.addSink(richSink).uid(sink.uid)
         }
       })

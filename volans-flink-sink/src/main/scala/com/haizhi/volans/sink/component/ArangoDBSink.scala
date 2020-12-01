@@ -7,7 +7,6 @@ import com.arangodb.model.DocumentImportOptions.OnDuplicate
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
 import com.haizhi.volans.sink.server.AtlasDao
-import com.haizhi.volans.sink.component.Sink
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreAtlasConfig
 import org.apache.flink.configuration.Configuration

@@ -18,7 +18,7 @@ import scala.collection.JavaConverters._
  * Author pengxb
  * Date 2020/11/2
  */
-object CombineFileJob extends Thread {
+object CombineFileJob extends Runnable {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private var storeConfig: StoreHiveConfig = _
@@ -92,8 +92,8 @@ object CombineFileJob extends Thread {
     for (unSolvedDir <- unSolvedDirList) {
       // 获取文件时间戳
       val fmtTime = unSolvedDir.getPath.getName.replaceAll(".*stage-", "")
-      val filterList = unSolvedFileList.filter(_.getPath.getName.contains(fmtTime))
-      if (filterList.size > 0) {
+      val mergedUnSolvedFileList = unSolvedFileList.filter(_.getPath.getName.contains(fmtTime))
+      if (mergedUnSolvedFileList.size > 0) {
         // 已合并但未移动到Hive仓库目录的文件，删除stage目录
         HDFSUtils.deleteDirectory(unSolvedDir.getPath, true)
       } else {
@@ -141,12 +141,14 @@ object CombineFileJob extends Thread {
     HDFSUtils.mkdirs(tmpDir)
 
     var stageTaskDir = tmpDir + "/stage-" + fmtTime
+    var _partitionName = ""
     if (partitionName != null || !"".equals(partitionName)) {
+      _partitionName = partitionName + "-"
       stageTaskDir = new StringBuilder()
         .append(tmpDir)
-        .append("/")
-        .append(partitionName)
-        .append("-stage-")
+        .append(java.io.File.separator)
+        .append(_partitionName)
+        .append("stage-")
         .append(fmtTime).toString
       // Example: ${workDir}/.working/year=2020_month=11_day=05-stage-20201105160000
     }
@@ -157,12 +159,13 @@ object CombineFileJob extends Thread {
     // 移动待合并文件到stage目录
     HDFSUtils.moveFiles(mergingFileList, stageTaskDir)
     logger.info(s"移动待合并文件到stage目录")
-    val _mergingFileList = mergingFileList.map(path => new Path(stageTaskDir + "/" + path.getName))
+    val _mergingFileList = mergingFileList.map(path => new Path(stageTaskDir + java.io.File.separator + path.getName))
 
     var preFix = new StringBuilder()
-      .append(stageTaskDir).append("/")
-      .append(partitionName)
-      .append("-part-")
+      .append(stageTaskDir)
+      .append(java.io.File.separator)
+      .append(_partitionName)
+      .append("part-")
       .append(fmtTime)
       .append(".")
       .append(combiner.getStoreType())
@@ -176,8 +179,8 @@ object CombineFileJob extends Thread {
 
     preFix = new StringBuilder().append(tmpDir)
       .append(java.io.File.separator)
-      .append(partitionName)
-      .append("-part-")
+      .append(_partitionName)
+      .append("part-")
       .append(fmtTime)
       .append(".")
       .append(combiner.getStoreType())
@@ -297,6 +300,7 @@ object CombineFileJob extends Thread {
 
   /**
    * 从路径中获取分区名称
+   * /year=2020/month=11/day=11 => year=2020_month=11_day=11
    *
    * @param mergingFile   待合并文件
    * @param workDir       工作目录
@@ -309,7 +313,7 @@ object CombineFileJob extends Thread {
     if (isPartitioned) {
       // 重启恢复后，获取分区文件名
       if (recoverable) {
-        //hdfs://nameservice1/user/work/bigdata_test/person_orc/.working/country=America_province=Paris-stage-20201127112329/part-0-1
+        // hdfs://nameservice1/user/work/bigdata_test/person_orc/.working/country=America_province=Paris-stage-20201127112329/part-0-1
         partitionName = mergingFile.getParent.getName.replaceAll("\\-stage\\-.*", "")
       } else {
         partitionName = mergingFile.getParent.toString.substring(workDir.length + 1).split("/").mkString("_")
@@ -334,7 +338,7 @@ object CombineFileJob extends Thread {
          * 第一次启动时，处理上次程序退出未完成的文件
          */
         if (firstLaunchFlag) {
-          logger.info("首次启动Job，开始处理上次未完成的文件...")
+          logger.info(s"${Thread.currentThread().getName} 首次启动Job，开始处理上次未完成的文件...")
           if (!HDFSUtils.exists(combinerVo.workDir)) {
             HDFSUtils.mkdirs(combinerVo.workDir)
           }
@@ -348,9 +352,9 @@ object CombineFileJob extends Thread {
             if (isPartitioned) {
               for (unSolvedMergedFile <- unSolvedMergedList) {
                 val partitionName = unSolvedMergedFile.getName.split("-part-")(0).replaceAll("_", "/")
-                val partitionLocation = tableLocation + "/" + partitionName
+                val partitionLocation = tableLocation + java.io.File.separator + partitionName
                 val partitionValues = partitionName
-                  .split(java.io.File.separator)
+                  .split("/")
                   .map(_.split("=")(1))
                   .toList
                   .asJava
@@ -358,7 +362,7 @@ object CombineFileJob extends Thread {
                 if (!HDFSUtils.exists(partitionLocation)) {
                   try {
                     // 创建分区
-                    hiveDao.addPartition(table, partitionValues, "/" + partitionName)
+                    hiveDao.addPartition(table, partitionValues, java.io.File.separator + partitionName)
                   } catch {
                     case e: AlreadyExistsException => logger.warn(s"分区 [/${partitionName}]已经存在")
                   }
@@ -380,7 +384,7 @@ object CombineFileJob extends Thread {
         if (partitionKeys.length > 0) {
           // 查找分区目录(包含文件且不包含子目录)
           val matchedPartitionDirList = HDFSUtils.listDirectoryWithoutSubDir(new Path(combinerVo.workDir), partitionKeys)
-          logger.info(s"获取分区目录: $matchedPartitionDirList")
+          logger.info(s"${Thread.currentThread().getName} 获取分区目录: $matchedPartitionDirList")
           matchedPartitionDirList.map(targetDir => {
             (targetDir, combineFile(storeConfig, combiner, targetDir, true))
           }).foreach(record => {
@@ -395,7 +399,7 @@ object CombineFileJob extends Thread {
                */
               val partitionValues = partitionLocPostFix
                 .substring(1)
-                .split(java.io.File.separator)
+                .split("/")
                 .map(_.split("=")(1))
                 .toList
                 .asJava

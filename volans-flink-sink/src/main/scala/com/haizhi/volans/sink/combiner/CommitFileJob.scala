@@ -1,6 +1,5 @@
 package com.haizhi.volans.sink.combiner
 
-import com.haizhi.volans.sink.combiner.CombineFileJob.{combineFile, combiner, logger, storeConfig, table}
 import com.haizhi.volans.sink.config.constant.HiveStoreType
 import com.haizhi.volans.sink.config.store.StoreHiveConfig
 import com.haizhi.volans.sink.server.HiveDao
@@ -17,7 +16,7 @@ import scala.collection.JavaConverters._
  * Author pengxb
  * Date 2020/11/26
  */
-object CommitFileJob extends Thread {
+object CommitFileJob extends Runnable {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private var storeConfig: StoreHiveConfig = _
@@ -132,7 +131,9 @@ object CommitFileJob extends Thread {
         }
         Thread.sleep(jobInterval)
       } catch {
-        case e: Exception => logger.error(e.getMessage, e)
+        case e: Exception =>
+          logger.error(e.getMessage, e)
+          e.printStackTrace()
       }
     }
   }

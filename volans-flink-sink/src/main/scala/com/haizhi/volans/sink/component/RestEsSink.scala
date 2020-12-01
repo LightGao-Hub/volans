@@ -1,7 +1,6 @@
 package com.haizhi.volans.sink.component
 
 import java.util
-import java.util.Properties
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}

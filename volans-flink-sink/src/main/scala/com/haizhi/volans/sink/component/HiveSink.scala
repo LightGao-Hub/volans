@@ -140,15 +140,19 @@ class HiveSink(override var storeType: StoreType,
         .build()
     }
 
-    if (storeConfig.rollingPolicy.rolloverEnable) {
+/*    if (storeConfig.rollingPolicy.rolloverEnable) {
       // 启动文件合并线程
       CombineFileJob.init(storeConfig)
-      CombineFileJob.start()
+      val runnable = new Thread(CombineFileJob)
+      runnable.setName("CombineFileJob")
+      runnable.start()
     } else {
       // 启动文件提交线程，不合并文件
       CommitFileJob.init(storeConfig)
-      CommitFileJob.start()
-    }
+      val runnable = new Thread(CommitFileJob)
+      runnable.setName("CommitFileJob")
+      runnable.start()
+    }*/
     streamSink
   }
 

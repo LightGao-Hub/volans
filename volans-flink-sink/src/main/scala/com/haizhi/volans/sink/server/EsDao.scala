@@ -205,20 +205,20 @@ class EsDao extends Serializable {
         .append(documentId)
         .append("\"}}\n")
       if (count % batchSize == 0) {
-        logger.info(s"bulkDelete Request: ${buffer.toString}")
+        logger.debug(s"bulkDelete Request: ${buffer.toString}")
         val response = bulkOperation(buffer.toString())
         if (response != null) {
-          logger.info(EntityUtils.toString(response.getEntity))
+          logger.debug(EntityUtils.toString(response.getEntity))
         }
         buffer.clear()
       }
       count = count + 1
     }
     if (buffer.size > 0) {
-      logger.info(s"bulkDelete Request: ${buffer.toString}")
+      logger.debug(s"bulkDelete Request: ${buffer.toString}")
       val response = bulkOperation(buffer.toString())
       if (response != null) {
-        logger.info(EntityUtils.toString(response.getEntity))
+        logger.debug(EntityUtils.toString(response.getEntity))
       }
     }
   }
@@ -246,20 +246,20 @@ class EsDao extends Serializable {
         .append(JSONUtils.toJson(documentMap))
         .append("\n")
       if (count % batchSize == 0) {
-        logger.info(s"bulkUpsert Request: ${buffer.toString}")
+        logger.debug(s"bulkUpsert Request: ${buffer.toString}")
         val response = bulkOperation(buffer.toString())
         if (response != null) {
-          logger.info(EntityUtils.toString(response.getEntity))
+          logger.debug(EntityUtils.toString(response.getEntity))
         }
         buffer.clear()
       }
       count = count + 1
     }
     if (buffer.size > 0) {
-      logger.info(s"bulkUpsert Request: ${buffer.toString}")
+      logger.debug(s"bulkUpsert Request: ${buffer.toString}")
       val response = bulkOperation(buffer.toString())
       if (response != null) {
-        logger.info(EntityUtils.toString(response.getEntity))
+        logger.debug(EntityUtils.toString(response.getEntity))
       }
     }
   }

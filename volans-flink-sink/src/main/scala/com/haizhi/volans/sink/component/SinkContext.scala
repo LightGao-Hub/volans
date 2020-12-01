@@ -64,29 +64,13 @@ object SinkContext {
       }
       val storeConfig: StoreConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(CoreConstants.STORE_CONFIG)), jsonType)
       val sinkConfig = SinkConfig(storeType, storeConfig)
-      sinks.add(buildSink(sinkConfig))
+      // sinks.add(buildSink(sinkConfig))
+      sinks.add(SinkFactory.createSink(sinkConfig, schemaVo))
+      if (storeType == StoreType.HIVE) {
+        sinks.add(new FileHandleSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig]))
+      }
     }
     sinks.toList
-  }
-
-  private def buildSink(sinkConfig: SinkConfig): Sink = {
-    val storeType: StoreType = sinkConfig.storeType
-    logger.debug(s">>>>>>>>sink format :[$storeType]")
-    if (storeType == StoreType.ATLAS || storeType == StoreType.GDB) {
-      new ArangoDBSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreAtlasConfig], schemaVo)
-    } else if (storeType == StoreType.ES) {
-      new RestEsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig])
-    } else if (storeType == StoreType.HBASE) {
-      new HbaseSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHBaseConfig], schemaVo)
-    } else if (storeType == StoreType.JANUS) {
-      new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
-    } else if (storeType == StoreType.HIVE) {
-      val hiveSink = new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig], schemaVo)
-      hiveSink.init()
-      hiveSink
-    } else {
-      throw new RuntimeException(">>>data out format error")
-    }
   }
 
   def getSchemoVo(): SchemaVo = {
