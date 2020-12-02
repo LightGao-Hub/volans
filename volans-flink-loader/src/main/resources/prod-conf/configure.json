@@ -30,32 +30,32 @@
   "schema": {
     "fields": [
       {
-        "sourceName": "from_key",
-        "isMain": "N",
+        "sourceName": "$.from_key",
+        "isMain": "Y",
         "targetName": "from_key",
         "type": "STRING"
       },
       {
-        "sourceName": "to_key",
-        "isMain": "N",
+        "sourceName": "$.to_key",
+        "isMain": "Y",
         "targetName": "to_key",
         "type": "STRING"
       },
       {
-        "sourceName": "business_status",
+        "sourceName": "$.bicycle.business_status",
         "isMain": "Y",
-        "targetName": "business_status",
-        "type": "STRING"
+        "targetName": "business",
+        "type": "LONG"
       },
       {
-        "sourceName": "address",
+        "sourceName": "$.bicycle.address",
         "isMain": "N",
-        "targetName": "address",
+        "targetName": "address2",
         "type": "DOUBLE"
       },
       {
-        "sourceName": "object_key",
-        "isMain": "N",
+        "sourceName": "$.object_key",
+        "isMain": "Y",
         "targetName": "object_key",
         "type": "STRING"
       }

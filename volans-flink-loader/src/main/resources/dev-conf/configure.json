@@ -1,23 +1,25 @@
 {
-  "dirtySink": {
-    "storeType": "file",
-    "errorMode": -1,
-    "errorStoreEnabled": true,
-    "errorStoreRowsLimit": 30000,
-    "inboundTaskId": "7083-HBASE",
-    "taskInstanceId": "7083",
-    "dirtyConfig": {
-      "path": "hdfs://localhost:9000/tmp/volans/groupId/dirty"
-    }
-  },
-  "errorSink": {
-    "storeType": "file",
-    "errorConfig": {
-      "path": "hdfs://localhost:9000/tmp/volans/groupId/taskInstanceId/error.log"
+  "errorInfo": {
+    "dirtyData": {
+      "storeType": "file",
+      "handleMode": -1,
+      "storeEnabled": true,
+      "storeRowsLimit": 30000,
+      "inboundTaskId": "7083-HBASE",
+      "taskInstanceId": "7083",
+      "config": {
+        "path": "hdfs:///tmp/volans3/groupId/taskInstanceId/dirty_data"
+      }
+    },
+    "logInfo": {
+      "storeType": "file",
+      "config": {
+        "path": "hdfs:///tmp/volans3/groupId/taskInstanceId/log_info/error.log"
+      }
     }
   },
   "taskConfig": {
-    "checkPoint": "hdfs://localhost:9000/tmp/volans/checkpoints/gourpId",
+    "checkPoint": "hdfs://localhost:9000/tmp/volans3/checkpoints/gourpId",
     "parallelism": 3,
     "checkpointInterval": 10000,
     "batchInterval": 10000,
@@ -29,32 +31,32 @@
   "schema": {
     "fields": [
       {
-        "sourceName": "from_key",
-        "isMain": "N",
+        "sourceName": "$.from_key",
+        "isMain": "Y",
         "targetName": "from_key",
         "type": "STRING"
       },
       {
-        "sourceName": "to_key",
-        "isMain": "N",
+        "sourceName": "$.to_key",
+        "isMain": "Y",
         "targetName": "to_key",
         "type": "STRING"
       },
       {
-        "sourceName": "business_status",
+        "sourceName": "$.bicycle.business_status",
         "isMain": "Y",
-        "targetName": "business_status",
-        "type": "STRING"
+        "targetName": "business",
+        "type": "LONG"
       },
       {
-        "sourceName": "address",
+        "sourceName": "$.bicycle.address",
         "isMain": "N",
-        "targetName": "address",
+        "targetName": "address2",
         "type": "DOUBLE"
       },
       {
-        "sourceName": "object_key",
-        "isMain": "N",
+        "sourceName": "$.object_key",
+        "isMain": "Y",
         "targetName": "object_key",
         "type": "STRING"
       }
@@ -173,7 +175,7 @@
       "sourceConfig":{
         "servers": "localhost:9092",
         "groupId": "grouoId02",
-        "topic": "flink_topic2",
+        "topic": "flink_topic3",
         "config":{
         }
       }

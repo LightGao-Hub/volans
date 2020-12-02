@@ -3,87 +3,91 @@ package com.haizhi.volans.loader.scala.config.check
 import java.text.SimpleDateFormat
 import java.util
 import java.util.Date
+
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorMessage
-import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
+import com.haizhi.volans.common.flink.base.scala.util.{JSONPathUtils, JSONUtils}
 import com.haizhi.volans.loader.scala.config.schema.{FieldType, Keys, SchemaFieldVo}
 import com.haizhi.volans.loader.scala.config.streaming.StreamingConfig
+import com.jayway.jsonpath.DocumentContext
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.{Logger, LoggerFactory}
+
 import collection.JavaConversions._
 
 /**
  * 脏数据校验：
- * {"from_key":"123123", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"6686"}
- * {"from_key":"", "to_key":"345345", "business_status":123.1, "address":1234, "object_key":"object02"}
- * {"from_key":"123123","to_key":"","business_status":123.1,"address":1234,"object_key":"ertreter"}
- * {"from_key":"123123","address":1234,"object_key":"ertreter"}
- * {"from_key":"123123","to_key":"123","address":1234,"object_key":"ertreter"}
- * {"from_key":"123123", "to_key":"345345", "business_status":"", "address":1234, "object_key":"ertreter"}
- * {"from_key":"123123", "to_key":"345345", "business_status":"123123", "address":1234, "object_key":"ertreter","sadf":123,"saaaa1df":4444}
+ * 正确数据：
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1"}
+ * 缺少object_key的脏数据：
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234}}
+ * 缺少from_key脏数据：
+ * {"to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"2"}
+ * 缺少address isMain = n 的正确数据：
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1"},"object_key":"3"}
+ * 缺少address 值 isMain = n 的正确数据：
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":""},"object_key":"3"}
+ * 缺少business_status ismain = y 的脏数据:
+ * {"from_key":"123123","to_key":"345345","bicycle":{"address":1234},"object_key":"4"}
+ * 多余字段的正确数据：
+ * {"s":"c","a":"b","from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1"}
  *
- * 类型转换：
- * {"from_key":"123123", "to_key":"345345", "business_status":"123.1", "address":1234, "object_key":"[1,2,3,4]"}
- * {"from_key":"123123", "to_key":"345345", "business_status":"1qwe23.1", "address":1234, "object_key":"[1,2,3,4]"}
- * {"from_key":"123123", "to_key":"345345", "business_status":"1qwe23.1", "address":1234, "object_key":"object01"}
  */
 case class CheckValueConversion(config: StreamingConfig) {
   private val logger: Logger = LoggerFactory.getLogger(classOf[CheckValueConversion])
   //所有Schema集合
-  val fieldSet: Set[SchemaFieldVo] = config.schemaVo.fields.toSet
-  val nameSet: Set[String] = fieldSet.map(_.sourceName)
+  private val fieldList: Seq[SchemaFieldVo] = config.schemaVo.fields.toList
+  private val fieldMap: Map[String, String] = fieldList.map(field => field.targetName -> field.sourceName).toMap
 
   //检验脏数据, false为脏数据
   def checkValue(value: String): (String, Boolean) = {
-    //将数据转换为Map
-    val stringToObject: util.Map[String, Object] = JSONUtils.jsonToJavaMap(value)
-    val tuple = checkKey(stringToObject, value)
+    //jsonPath转换数据
+    val ctx: DocumentContext = JSONPathUtils.context.parse(value)
+    val tuple = checkKey(ctx, value)
+
     //如果key异常，直接返回脏数据
     if (!tuple._2)
       return tuple
 
-    val object_key = stringToObject.get(s"${Keys.OBJECT_KEY}").toString
+    val object_key: String = ctx.read(s"${Keys.OBJECT_KEY}")
+    val valueMap = new util.HashMap[String, Object]()
     //检查Schema所有字段及isMain
-    for (field <- fieldSet) {
+    for (field <- fieldList) {
       //如果不存在field字段 且 isMain == Y 为异常数据
       //如果field字段的值为null或者为空字符串，且 isMain == Y 为异常数据
-      val fieldV = stringToObject.getOrDefault(field.sourceName, null)
-      if (!stringToObject.contains(field.sourceName) && "Y".equalsIgnoreCase(field.isMain))
-        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
-          s"不存在 且 isMain ${field.isMain}") -> false
-      else if ((fieldV == null || StringUtils.isBlank(fieldV.toString)) && "Y".equalsIgnoreCase(field.isMain))
+      val fieldV: Object = ctx.read(field.sourceName)
+      if (fieldV == null && "Y".equalsIgnoreCase(field.isMain))
         return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
           s"字段值为空 且 isMain ${field.isMain}") -> false
+      if (fieldV != null)
+        valueMap.put(field.sourceName, ctx.read(field.sourceName))
     }
     logger.info(s"数据校验正确 value :$value ")
-    //删除schema中不包含的字段
-    val it: util.Iterator[util.Map.Entry[String, Object]] = stringToObject.entrySet.iterator
-    while (it.hasNext) {
-      val item: util.Map.Entry[String, Object] = it.next
-      if (!nameSet.contains(item.getKey))
-        it.remove()
-    }
-    //logger.info(s"删除多余字段后 value : $stringToObject")
+
     //类型转换
-    typeConversion(stringToObject, fieldSet)
+    typeConversion(valueMap, fieldList)
   }
 
   //类型转换,false为转换异常
   def typeConversion(stringToObject: util.Map[String, Object],
-                     fields: Set[SchemaFieldVo]): (String, Boolean) = {
+                     fields: Seq[SchemaFieldVo]): (String, Boolean) = {
     try {
-      for(field <- fields) {
-        val sourceValue: Object = stringToObject.get(field.sourceName)
-        val targetValue = convert(sourceValue, field)
-        if(!field.sourceName.equals(field.targetName))
+      for (field <- fields) {
+        //由于字段可能设置 isMain = N，导致数据没有此sourceName字段
+        val sourceValue: Object = stringToObject.getOrDefault(field.sourceName, null)
+        if (sourceValue != null) {
+          //由于字段可能设置 isMain = N，所以此字段的值有可能为"" 空字符串，无需转换类型
+          val targetValue: Object = convert(sourceValue, field)
+          //将targetName，targetValue 作为k,v传给下游
           stringToObject.remove(field.sourceName)
-        stringToObject.put(field.targetName, targetValue)
+          stringToObject.put(field.targetName, targetValue)
+        }
       }
       //logger.info(s"状态修改后的 json = ${JSONUtils.toJson(stringToObject)}")
       JSONUtils.toJson(stringToObject) -> true
     } catch {
       case e: Exception =>
-        logger.info(s" 类型转换异常，此条为脏数据 ")
-        getErrorMessageJson(stringToObject.get(s"${Keys.OBJECT_KEY}").toString, JSONUtils.toJson(stringToObject), Keys.TYPE_ERROR,
+        logger.info(s" 类型转换异常，此条为脏数据 ${JSONUtils.toJson(stringToObject)}")
+        getErrorMessageJson(stringToObject.get(this.fieldMap(Keys.OBJECT_KEY)).toString, JSONUtils.toJson(stringToObject), Keys.TYPE_ERROR,
           s" 类型转换异常 ${e.getMessage}") -> false
     }
   }
@@ -134,27 +138,24 @@ case class CheckValueConversion(config: StreamingConfig) {
    *
    * @return
    */
-  def checkKey(stringToObject: util.Map[String, Object], value: String): (String, Boolean) = {
-    if (!stringToObject.contains(s"${Keys.OBJECT_KEY}"))
-      return getErrorMessageJson("null", value, Keys.CHECK_ERROR, "object_key 不存在") -> false
-    if (StringUtils.isBlank(stringToObject.get(s"${Keys.OBJECT_KEY}").toString))
-      return getErrorMessageJson("null", value, Keys.CHECK_ERROR, "object_key 为空") -> false
-    if (StringUtils.contains(stringToObject.get(s"${Keys.OBJECT_KEY}").toString, "/"))
+  def checkKey(ctx: DocumentContext, value: String): (String, Boolean) = {
+    val object_key: String = ctx.read(this.fieldMap(Keys.OBJECT_KEY))
+    if (StringUtils.isBlank(object_key))
+      return getErrorMessageJson("null", value, Keys.CHECK_ERROR, "object_key 不存在 或为 null") -> false
+    if (StringUtils.contains(object_key, "/"))
       return getErrorMessageJson("null", value, Keys.CHECK_ERROR, s"objectKey must not contain a slash[/]") -> false
-    val object_key = stringToObject.get(s"${Keys.OBJECT_KEY}").toString
 
     if (config.schemaVo.isEdge) {
-      if (!stringToObject.contains(s"${Keys.FROM_KEY}"))
+      val from: String = ctx.read(this.fieldMap(Keys.FROM_KEY))
+      if (StringUtils.isBlank(from))
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "from_key 不存在") -> false
-      if (StringUtils.isBlank(stringToObject.get(s"${Keys.FROM_KEY}").toString))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "from_key 为空") -> false
-      if (StringUtils.contains(stringToObject.get(s"${Keys.FROM_KEY}").toString, "/"))
+      if (StringUtils.contains(from, "/"))
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, s"from_key must not contain a slash[/]") -> false
-      if (!stringToObject.contains(s"${Keys.TO_KEY}"))
+
+      val to: String = ctx.read(this.fieldMap(Keys.TO_KEY))
+      if (StringUtils.isBlank(to))
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "to_key 不存在") -> false
-      if (StringUtils.isBlank(stringToObject.get(s"${Keys.TO_KEY}").toString))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "to_key 为空") -> false
-      if (StringUtils.contains(stringToObject.get(s"${Keys.TO_KEY}").toString, "/"))
+      if (StringUtils.contains(to, "/"))
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, s"to_key must not contain a slash[/]") -> false
     }
     (value, true)

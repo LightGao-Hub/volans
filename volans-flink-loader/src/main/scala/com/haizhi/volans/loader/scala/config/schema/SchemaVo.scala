@@ -29,6 +29,18 @@ case class SchemaVo(name: String,
     CheckHelper.checkNotNull(`type`, Parameter.TYPE)
     if (StringUtils.isBlank(operation))
       operation = "_operation"
+    val map = fields.toList.map(field => field.targetName -> field.sourceName).toMap
+    if(!map.contains(Keys.OBJECT_KEY)) {
+      CheckHelper.checkNotNull(null, Keys.OBJECT_KEY)
+    }
+    if(isEdge) {
+      if(!map.contains(Keys.FROM_KEY)) {
+        CheckHelper.checkNotNull(null, Keys.FROM_KEY)
+      }
+      if(!map.contains(Keys.TO_KEY)) {
+        CheckHelper.checkNotNull(null, Keys.TO_KEY)
+      }
+    }
   }
 
   def isVertex: Boolean = {

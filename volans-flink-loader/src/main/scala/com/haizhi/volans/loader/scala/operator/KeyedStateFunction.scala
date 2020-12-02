@@ -118,7 +118,7 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
       //脏数据和正确数据放入不同State
       if (!tuple._2) {
         //打印脏数据
-        logger.info(s"打印脏数据 key =${tuple._2} , dirtyData = ${tuple._1}")
+        logger.info(s"打印脏数据 dirtyData = ${tuple._1}")
         //脏数据累加
         dirtyCount.update(dirtyCount.value() + 1)
         //度量增加

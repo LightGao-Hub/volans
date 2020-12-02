@@ -74,21 +74,20 @@ object StartFlinkLoader {
 
       // 获取Sink列表, 循环增加sink
       val sinksList: List[Sink] = SinkContext.getSinks()
-      sinksList.foreach(sink => {
-        if (sink.isInstanceOf[HiveSink]) {
+      sinksList.foreach {
+        case sink@(_: HiveSink) =>
           val avroSchema = sink.config.getProperty(CoreConstants.AVRO_SCHEMA)
           stream.flatMap(_.toIterable)
             .map(new AvroConvertMapFunction(avroSchema))
             .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
-        } else if (sink.isInstanceOf[FileHandleSink]) {
+        case sink@(_: FileHandleSink) =>
           stream.addSink(sink.build(GenericFuncValue.ITERABLE_STRING))
             .uid(sink.uid)
             .setParallelism(1)
-        } else {
+        case sink =>
           val richSink = sink.build(GenericFuncValue.ITERABLE_STRING)
           stream.addSink(richSink).uid(sink.uid)
-        }
-      })
+      }
       //执行程序
       env.execute()
     } catch {
