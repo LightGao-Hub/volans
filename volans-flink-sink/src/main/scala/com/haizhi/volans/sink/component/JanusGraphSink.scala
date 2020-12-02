@@ -1,6 +1,7 @@
 package com.haizhi.volans.sink.component
 
 import com.haizhi.volans.sink.config.constant.StoreType
+import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreJanusConfig
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.{RichSinkFunction, SinkFunction}
@@ -11,7 +12,8 @@ import org.slf4j.LoggerFactory
  * Date 2020/11/18
  */
 class JanusGraphSink(override var storeType: StoreType,
-                     var storeConfig: StoreJanusConfig)
+                     var storeConfig: StoreJanusConfig,
+                     var schemaVo: SchemaVo)
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[JanusGraphSink])

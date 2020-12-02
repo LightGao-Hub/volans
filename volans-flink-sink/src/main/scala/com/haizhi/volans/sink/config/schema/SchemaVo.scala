@@ -9,11 +9,12 @@ import scala.collection.JavaConversions._
  * Created by zhuhan on 2019/8/8.
  */
 case class SchemaVo(name: String,
+                    operation: String = "_operation",
                     `type`: String,
                     fields: java.util.List[SchemaFieldVo]) {
 
   def getScalaFields: Map[String, SchemaFieldVo] = {
-    fields.toList.map(item => (item.targetName,item)).toMap
+    fields.toList.map(item => (item.targetName, item)).toMap
   }
 
   def isVertex(): Boolean = {

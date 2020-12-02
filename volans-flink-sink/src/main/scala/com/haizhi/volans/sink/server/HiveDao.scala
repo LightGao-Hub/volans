@@ -40,60 +40,64 @@ class HiveDao extends Serializable {
 
   /**
    * 获取Hive表字段列表，不包括分区字段
+   *
    * @param table
    * @return List[(field,type)]
    */
-  def getFieldSchema(table: Table): List[(String,String)] = {
+  def getFieldSchema(table: Table): List[(String, String)] = {
     val cols = table.getSd.getCols
-    val list = new ListBuffer[(String,String)]
+    val list = new ListBuffer[(String, String)]
 
-    for(i <- 0 until cols.size()){
-      list.append((cols.get(i).getName,cols.get(i).getType))
+    for (i <- 0 until cols.size()) {
+      list.append((cols.get(i).getName, cols.get(i).getType))
     }
     list.toList
   }
 
   /**
    * 获取Hive表字段列表，包括分区字段
+   *
    * @param table
    * @return
    */
-  def getAllFieldSchema(table: Table): List[(String,String)] = {
+  def getAllFieldSchema(table: Table): List[(String, String)] = {
     val cols = table.getSd.getCols
-    val list = new ListBuffer[(String,String)]
+    val list = new ListBuffer[(String, String)]
 
     // 常规字段
-    for(i <- 0 until cols.size()){
-      list.append((cols.get(i).getName,cols.get(i).getType))
+    for (i <- 0 until cols.size()) {
+      list.append((cols.get(i).getName, cols.get(i).getType))
     }
     // 分区字段
     val partitionKeys = table.getPartitionKeys
-    for(i <- 0 until partitionKeys.size()){
-      list.append((partitionKeys.get(i).getName,partitionKeys.get(i).getType))
+    for (i <- 0 until partitionKeys.size()) {
+      list.append((partitionKeys.get(i).getName, partitionKeys.get(i).getType))
     }
     list.toList
   }
 
   /**
    * 获取Hive表字段map集合
+   *
    * @param table
    * @return
    */
-  def getFieldSchemaMap(table: Table): java.util.Map[String,String] = {
+  def getFieldSchemaMap(table: Table): java.util.Map[String, String] = {
     val cols = table.getSd.getCols
-    val schemaMap = new java.util.HashMap[String,String]
-    for(i <- 0 until cols.size()){
-      schemaMap.put(cols.get(i).getName,cols.get(i).getType)
+    val schemaMap = new java.util.HashMap[String, String]
+    for (i <- 0 until cols.size()) {
+      schemaMap.put(cols.get(i).getName, cols.get(i).getType)
     }
     schemaMap
   }
 
   /**
    * 获取字段分隔符
+   *
    * @param table
    * @return
    */
-  def getFieldDelimited(table: Table): String ={
+  def getFieldDelimited(table: Table): String = {
     table.getSd.getSerdeInfo.getParameters.get("field.delim")
   }
 
@@ -109,6 +113,18 @@ class HiveDao extends Serializable {
       serLib = table.getSd.getInputFormat
     }
     HiveStoreType.getStoreType(serLib)
+  }
+
+  /**
+   * 获取分区schema信息
+   * @param table
+   * @return
+   */
+  def getPartitionSchema(table: Table): List[(String, String)] = {
+    table.getPartitionKeys
+      .toArray(Array[FieldSchema]())
+      .toList
+      .map(schema => (schema.getName, schema.getType))
   }
 
   /**

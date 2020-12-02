@@ -22,5 +22,6 @@ object CoreConstants {
   val SCHEMA: String = "schema"
 
   val AVRO_SCHEMA = "avroSchema"
+  val FIELD_SCHEMA_LIST = "fieldSchemaList"
 
 }
