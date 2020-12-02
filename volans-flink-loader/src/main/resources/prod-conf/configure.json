@@ -155,11 +155,9 @@
       "storeConfig": {
         "database": "bigdata_test",
         "table": "tv_user4",
-        "user": "",
-        "password": "",
         "rollingPolicy": {
           "workDir": "hdfs:///user/work/bigdata/hive",
-          "rolloverEnable": false,
+          "rolloverEnable": true,
           "maxPartSize": 128,
           "rolloverInterval": 60,
           "inactivityInterval": 60
