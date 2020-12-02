@@ -8,13 +8,13 @@
       "inboundTaskId": "7083-HBASE",
       "taskInstanceId": "7083",
       "config": {
-        "path": "hdfs:///tmp/volans2/groupId/taskInstanceId/dirty_data"
+        "path": "hdfs:///tmp/volans3/groupId/dirty_data"
       }
     },
     "logInfo": {
       "storeType": "file",
       "config": {
-        "path": "hdfs:///tmp/volans2/groupId/taskInstanceId/log_info/error.log"
+        "path": "hdfs:///tmp/volans2/groupId/taskInstanceId/log_info"
       }
     }
   },

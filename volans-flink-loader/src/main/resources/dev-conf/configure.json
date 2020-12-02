@@ -8,13 +8,13 @@
       "inboundTaskId": "7083-HBASE",
       "taskInstanceId": "7083",
       "config": {
-        "path": "hdfs:///tmp/volans3/groupId/taskInstanceId/dirty_data"
+        "path": "hdfs:///tmp/volans3/groupId/dirty_data"
       }
     },
     "logInfo": {
       "storeType": "file",
       "config": {
-        "path": "hdfs:///tmp/volans3/groupId/taskInstanceId/log_info/error.log"
+        "path": "hdfs:///tmp/volans3/groupId/taskInstanceId/log_info"
       }
     }
   },
@@ -57,8 +57,7 @@
       {
         "sourceName": "$.object_key",
         "isMain": "Y",
-        "targetName": "object_key",
-        "type": "STRING"
+        "targetName": "object_key"
       }
     ],
     "name": "com_new_vertex_tv_user_shanghai_1",

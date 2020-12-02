@@ -26,7 +26,6 @@ object Keys {
 
   val CHECK_ERROR = "CHECK_ERROR"
   val RUNTIME_ERROR = "RUNTIME_ERROR"
-  val DIRTY_LOG = "dirty.log"
   val ERROR_LOG = "error.log"
   val COUNT_LOG = "count.log"
   val PATH_FLAG = "/"

@@ -1,5 +1,8 @@
 package com.haizhi.volans.loader.scala.executor
 
+import java.text.SimpleDateFormat
+import java.util.Date
+
 import com.haizhi.volans.common.flink.base.java.util.FileUtil
 import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.loader.scala.config.exception.VolansPathException
@@ -10,7 +13,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 case class FileExecutor(fileConfig: FileConfig) extends LogExecutor with DirtyExecutor {
 
-  private val LOG: Logger =  LoggerFactory.getLogger(classOf[FileExecutor])
+  private val LOG: Logger = LoggerFactory.getLogger(classOf[FileExecutor])
 
   override def init(): Unit = {
     LOG.info(s" FileExecutor init success path = ${fileConfig.path} ")
@@ -86,6 +89,8 @@ case class FileExecutor(fileConfig: FileConfig) extends LogExecutor with DirtyEx
     }
   }
 
+
+
   /**
    * 兼容路径是否以error.log结尾，例如：
    *        1. xxx/path/
@@ -96,20 +101,24 @@ case class FileExecutor(fileConfig: FileConfig) extends LogExecutor with DirtyEx
    * @return
    */
   def pathHelper(path: String, model: String): String = {
-    if (path.endsWith(s"$model")) {
-      path
-    } else {
-      if (path.endsWith("/"))
-        path + s"$model"
-      else
-        path + s"${Keys.PATH_FLAG}$model"
-    }
+    if (path.endsWith("/"))
+      path + s"$getTime/$model"
+    else
+      path + s"${Keys.PATH_FLAG}$getTime/$model"
   }
 
   def checkPath(path: String): Unit = {
     if (!path.startsWith(s"${Keys.FILE_PATH}") && !path.startsWith(s"${Keys.HDFS_PATH}") && !path.startsWith(s"${Keys.PATH_FLAG}")) {
       throw new VolansPathException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} the path  [$path] is error ")
     }
+  }
+
+  def getTime: String = {
+    val sdf = new SimpleDateFormat(); // 格式化时间
+    sdf.applyPattern("yyyy-MM-dd"); // a为am/pm的标记
+    val date = new Date(); // 获取当前时间
+    LOG.info("现在时间：" + sdf.format(date))
+    sdf.format(date)
   }
 
   override def dirtyWriter(value: String): Unit = {
