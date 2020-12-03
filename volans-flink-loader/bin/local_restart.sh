@@ -14,5 +14,5 @@ $extLibInfo \
 -s $1 \
 -m localhost:8081 \
 -c com.haizhi.volans.loader.scala.StartFlinkLoader \
-$LIB_HOME/volans-flink-loader-1.0.0.jar \
+$LIB_HOME/volans-flink-loader-*.jar \
 -input $2
