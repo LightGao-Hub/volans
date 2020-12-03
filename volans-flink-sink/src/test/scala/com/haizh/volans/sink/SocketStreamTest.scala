@@ -1,24 +1,11 @@
 package com.haizhi.volans.sink
 
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
-import java.util.Properties
-
-import com.haizhi.volans.sink.component.{HiveSink, SinkContext}
-import com.haizhi.volans.sink.config.constant.{CoreConstants, HiveStoreType, Keys}
-import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue}
-import com.haizhi.volans.sink.writer.orc.{OrcUtils, OrcWriters}
-import com.haizhi.volans.sink.server.HiveDao
-import com.haizhi.volans.sink.util.{AvroUtils, LocalFileUtils}
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
-import org.apache.avro.io.{DatumReader, Decoder, DecoderFactory, Encoder, EncoderFactory}
-import org.apache.flink.core.fs.Path
-import org.apache.flink.formats.parquet.avro.ParquetAvroWriters
+import com.haizhi.volans.sink.component.{FileHandleSink, HiveSink, SinkContext}
+import com.haizhi.volans.sink.config.constant.{HiveStoreType, Keys}
+import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue, OrcConvertMapFunction}
+import com.haizhi.volans.sink.util.LocalFileUtils
 import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.functions.sink.filesystem.{BucketAssigner, StreamingFileSink}
-import org.apache.flink.streaming.api.functions.sink.filesystem.bucketassigners.BasePathBucketAssigner
-import org.apache.flink.streaming.api.functions.sink.filesystem.rollingpolicies.OnCheckpointRollingPolicy
 import org.apache.flink.streaming.api.scala.function.ProcessWindowFunction
 import org.apache.flink.streaming.api.scala.{DataStream, StreamExecutionEnvironment, _}
 import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows
@@ -55,7 +42,7 @@ object SocketStreamTest {
       "localhost"
     }
 
-    val input: DataStream[Iterable[String]] = senv
+    val stream: DataStream[Iterable[String]] = senv
       .socketTextStream(hostname, 9999)
       .map(_ -> "default")
       .keyBy(_._2)
@@ -177,14 +164,26 @@ object SocketStreamTest {
     // Add Sink
     sinksList.foreach(sink => {
       if (sink.isInstanceOf[HiveSink]) {
-        // 获取avro schema
-        val avroSchema = sink.config.getProperty(CoreConstants.AVRO_SCHEMA)
-        input.flatMap(_.toIterable)
-          .map(new AvroConvertMapFunction(avroSchema))
-          .addSink(sink.build(GenericFuncValue.GENERICRECORD))
+        val hiveSink = sink.asInstanceOf[HiveSink]
+        if (HiveStoreType.ORC.equals(hiveSink.getTableStoredType)) {
+          val fieldSchemaList = hiveSink.getFieldSchemaList()
+          stream.flatMap(_.toIterable)
+            .map(new OrcConvertMapFunction(fieldSchemaList))
+            .addSink(hiveSink.build(GenericFuncValue.GENERICROWDATA))
+            .uid(hiveSink.uid)
+        } else {
+          val avroSchema = hiveSink.getAvroSchema()
+          stream.flatMap(_.toIterable)
+            .map(new AvroConvertMapFunction(avroSchema))
+            .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
+        }
+      } else if (sink.isInstanceOf[FileHandleSink]) {
+        stream.addSink(sink.build(GenericFuncValue.ITERABLE_STRING))
+          .uid(sink.uid)
+          .setParallelism(1)
       } else {
         val richSink = sink.build(GenericFuncValue.ITERABLE_STRING)
-        input.addSink(richSink)
+        stream.addSink(richSink).uid(sink.uid)
       }
     })
 

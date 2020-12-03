@@ -2,6 +2,7 @@ package com.haizhi.volans.sink.func
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
+import org.apache.flink.table.data.{GenericRowData, RowData}
 
 /**
  * Author pengxb
@@ -28,5 +29,7 @@ object GenericFuncValue {
 
 
   val ITERABLE_STRING: Iterable[String] = Iterable("")
+
+  val GENERICROWDATA: RowData = new GenericRowData(1)
 
 }

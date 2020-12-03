@@ -10,8 +10,8 @@ import com.haizhi.volans.loader.scala.config.streaming.{FileConfig, StreamingCon
 import com.haizhi.volans.loader.scala.executor._
 import com.haizhi.volans.loader.scala.operator.KeyedStateFunction
 import com.haizhi.volans.sink.component._
-import com.haizhi.volans.sink.config.constant.CoreConstants
-import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue}
+import com.haizhi.volans.sink.config.constant.HiveStoreType
+import com.haizhi.volans.sink.func.{AvroConvertMapFunction, GenericFuncValue, OrcConvertMapFunction}
 import config.schema.Keys
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.serialization.{SimpleStringEncoder, SimpleStringSchema}
@@ -75,11 +75,21 @@ object StartFlinkLoader {
       // 获取Sink列表, 循环增加sink
       val sinksList: List[Sink] = SinkContext.getSinks()
       sinksList.foreach {
-        case sink@(_: HiveSink) =>
-          val avroSchema = sink.config.getProperty(CoreConstants.AVRO_SCHEMA)
-          stream.flatMap(_.toIterable)
-            .map(new AvroConvertMapFunction(avroSchema))
-            .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
+        case sink@(_: HiveSink) => {
+          val hiveSink = sink.asInstanceOf[HiveSink]
+          if (HiveStoreType.ORC.equals(hiveSink.getTableStoredType)) {
+            val fieldSchemaList = hiveSink.getFieldSchemaList()
+            stream.flatMap(_.toIterable)
+              .map(new OrcConvertMapFunction(fieldSchemaList))
+              .addSink(hiveSink.build(GenericFuncValue.GENERICROWDATA))
+              .uid(hiveSink.uid)
+          } else {
+            val avroSchema = hiveSink.getAvroSchema()
+            stream.flatMap(_.toIterable)
+              .map(new AvroConvertMapFunction(avroSchema))
+              .addSink(sink.build(GenericFuncValue.GENERICRECORD)).uid(sink.uid)
+          }
+        }
         case sink@(_: FileHandleSink) =>
           stream.addSink(sink.build(GenericFuncValue.ITERABLE_STRING))
             .uid(sink.uid)

@@ -79,6 +79,12 @@
       <version>${flink.version}</version>
       <scope>${scope.version}</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
+      <artifactId>flink-table-common</artifactId>
+      <version>${flink.version}</version>
+      <scope>${scope.version}</scope>
+    </dependency>
     <!-- Flink end-->
     <!-- hadoop-client start -->
     <dependency>

@@ -54,7 +54,7 @@ object AvroUtils {
    */
   def hiveFieldTypeToAvro(fieldType: String): String = {
     fieldType.toLowerCase match {
-      case HiveFieldType.TINGINT | HiveFieldType.SMALLINT | HiveFieldType.INT => AvroFieldType.INT
+      case HiveFieldType.TINYINT | HiveFieldType.SMALLINT | HiveFieldType.INT => AvroFieldType.INT
       case HiveFieldType.BIGINT => AvroFieldType.LONG
       case HiveFieldType.FLOAT => AvroFieldType.FLOAT
       case HiveFieldType.DOUBLE => AvroFieldType.DOUBLE

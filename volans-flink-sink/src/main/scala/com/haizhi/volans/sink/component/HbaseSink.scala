@@ -47,7 +47,7 @@ class HbaseSink(override var storeType: StoreType,
     val filteredTuple = elements.map(record => {
       val recordMap = JSONUtils.jsonToJavaMap(record)
       validateAndMerge(recordMap)
-      val filterFlag = recordMap.get(Keys._OPERATION) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(Keys._OPERATION).toString)
+      val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
       (recordMap, filterFlag)
     }
     )

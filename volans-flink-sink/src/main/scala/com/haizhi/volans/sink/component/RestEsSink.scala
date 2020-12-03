@@ -4,6 +4,7 @@ import java.util
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
+import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreEsConfig
 import com.haizhi.volans.sink.server.EsDao
 import org.apache.flink.configuration.Configuration
@@ -15,7 +16,8 @@ import org.slf4j.LoggerFactory
  * Date 2020/11/23
  */
 class RestEsSink(override var storeType: StoreType,
-                 var storeConfig: StoreEsConfig)
+                 var storeConfig: StoreEsConfig,
+                 var schemaVo: SchemaVo)
   extends RichSinkFunction[Iterable[String]] with Sink {
 
   private val logger = LoggerFactory.getLogger(classOf[RestEsSink])
@@ -36,8 +38,8 @@ class RestEsSink(override var storeType: StoreType,
       elements.map(record => {
         val recordMap = JSONUtils.jsonToJavaMap(record)
         validateAndMerge(recordMap)
-        val filterFlag = recordMap.get(Keys._OPERATION) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(Keys._OPERATION).toString)
-        recordMap.remove(Keys._OPERATION)
+        val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
+        recordMap.remove(schemaVo.operation)
         // (source string,converted map,filter flag)
         (JSONUtils.toJson(recordMap), recordMap, filterFlag)
       }

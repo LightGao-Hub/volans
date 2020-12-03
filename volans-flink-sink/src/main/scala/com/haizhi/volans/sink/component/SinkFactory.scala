@@ -16,11 +16,11 @@ object SinkFactory {
       case StoreType.ATLAS | StoreType.GDB =>
         new ArangoDBSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreAtlasConfig], schemaVo)
       case StoreType.ES =>
-        new RestEsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig])
+        new RestEsSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreEsConfig],schemaVo)
       case StoreType.HBASE =>
         new HbaseSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHBaseConfig], schemaVo)
       case StoreType.JANUS =>
-        new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig])
+        new JanusGraphSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreJanusConfig],schemaVo)
       case StoreType.HIVE =>
         val hiveSink = new HiveSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig], schemaVo)
         hiveSink.init()
