@@ -25,6 +25,7 @@ object Keys {
   val KEY = "key"
 
   val CHECK_ERROR = "CHECK_ERROR"
+  val CHECK_DIRTY_ERROR = "CHECK_DIRTY_ERROR"
   val RUNTIME_ERROR = "RUNTIME_ERROR"
   val ERROR_LOG = "error.log"
   val COUNT_LOG = "count.log"

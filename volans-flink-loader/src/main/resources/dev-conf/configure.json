@@ -19,7 +19,7 @@
     }
   },
   "taskConfig": {
-    "checkPoint": "hdfs://localhost:9000/tmp/volans3/checkpoints/gourpId",
+    "checkPoint": "hdfs:///tmp/volans3/checkpoints/gourpId",
     "parallelism": 3,
     "checkpointInterval": 10000,
     "batchInterval": 10000,
@@ -57,12 +57,16 @@
       {
         "sourceName": "$.object_key",
         "isMain": "Y",
-        "targetName": "object_key"
+        "targetName": "object_key",
+        "type": "STRING"
       }
     ],
     "name": "com_new_vertex_tv_user_shanghai_1",
-    "operation": "_operation",
-    "type": "edge"
+    "type": "edge",
+    "operation": {
+      "mode": "mix",
+      "operateField": "_operation"
+    }
   },
   "sinks": [
     {
@@ -150,28 +154,12 @@
         "url":"192.168.1.37:8529",
         "user":"haizhi"
       }
-    },
-    {
-      "storeType": "HIVE",
-      "storeConfig": {
-        "database": "bigdata_test",
-        "table": "tv_user4",
-        "user": "",
-        "password": "",
-        "rollingPolicy":{
-          "workDir":"hdfs://cmb01:8020/user/work/bigdata/hive",
-          "rolloverEnable": false,
-          "maxPartSize":128,
-          "rolloverInterval":60,
-          "inactivityInterval":60
-        }
-      }
     }
   ],
   "sources": [
     {
       "storeType":"KAFKA",
-      "sourceConfig":{
+      "storeConfig":{
         "servers": "localhost:9092",
         "groupId": "grouoId02",
         "topic": "flink_topic3",

@@ -61,8 +61,11 @@
       }
     ],
     "name": "com_new_vertex_tv_user_shanghai_1",
-    "operation": "_operation",
-    "type": "edge"
+    "type": "edge",
+    "operation": {
+      "mode": "mix",
+      "operateField": "_operation"
+    }
   },
   "sinks": [
     {
@@ -168,7 +171,7 @@
   "sources": [
     {
       "storeType": "KAFKA",
-      "sourceConfig": {
+      "storeConfig": {
         "servers": "cmb01:9092",
         "groupId": "grouoId02",
         "topic": "flink_topic2",

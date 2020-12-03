@@ -56,11 +56,15 @@ case class CheckValueConversion(config: StreamingConfig) {
       //如果field字段的值为null或者为空字符串，且 isMain == Y 为异常数据
       val fieldV: Object = ctx.read(field.sourceName)
       if (fieldV == null && "Y".equalsIgnoreCase(field.isMain))
-        return getErrorMessageJson(object_key, value, Keys.CHECK_ERROR, s"${field.sourceName} " +
+        return getErrorMessageJson(object_key, value, Keys.CHECK_DIRTY_ERROR, s"${field.sourceName} " +
           s"字段值为空 且 isMain ${field.isMain}") -> false
       if (fieldV != null)
         valueMap.put(field.sourceName, ctx.read(field.sourceName))
     }
+    //验证是MIX模式下kafka是否具备operateField字段
+    /*val operateField: String = ctx.read(config.schemaVo.operation.operateField)
+    if (config.schemaVo.operation.isMix && StringUtils.isBlank(operateField))
+      return getErrorMessageJson(object_key, value, Keys.CHECK_DIRTY_ERROR, " operation Mix mode, operateField字段值为空") -> false*/
     logger.info(s"数据校验正确 value :$value ")
 
     //类型转换
@@ -75,7 +79,7 @@ case class CheckValueConversion(config: StreamingConfig) {
         //由于字段可能设置 isMain = N，导致数据没有此sourceName字段
         val sourceValue: Object = stringToObject.getOrDefault(field.sourceName, null)
         if (sourceValue != null) {
-          //由于字段可能设置 isMain = N，所以此字段的值有可能为"" 空字符串，无需转换类型
+          //由于字段可能设置 isMain = N，所以此字段的值有可能为""或其他类型默认值，存在类型转换异常，此时数据为脏数据
           val targetValue: Object = convert(sourceValue, field)
           //将targetName，targetValue 作为k,v传给下游
           stringToObject.remove(field.sourceName)
@@ -141,22 +145,22 @@ case class CheckValueConversion(config: StreamingConfig) {
   def checkKey(ctx: DocumentContext, value: String): (String, Boolean) = {
     val object_key: String = ctx.read(this.fieldMap(Keys.OBJECT_KEY))
     if (StringUtils.isBlank(object_key))
-      return getErrorMessageJson("null", value, Keys.CHECK_ERROR, "object_key 不存在 或为 null") -> false
+      return getErrorMessageJson("null", value, Keys.CHECK_DIRTY_ERROR, "object_key 不存在 或为 null") -> false
     if (StringUtils.contains(object_key, "/"))
-      return getErrorMessageJson("null", value, Keys.CHECK_ERROR, s"objectKey must not contain a slash[/]") -> false
+      return getErrorMessageJson("null", value, Keys.CHECK_DIRTY_ERROR, s"objectKey must not contain a slash[/]") -> false
 
     if (config.schemaVo.isEdge) {
       val from: String = ctx.read(this.fieldMap(Keys.FROM_KEY))
       if (StringUtils.isBlank(from))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "from_key 不存在") -> false
+        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, "from_key 不存在") -> false
       if (StringUtils.contains(from, "/"))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, s"from_key must not contain a slash[/]") -> false
+        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, s"from_key must not contain a slash[/]") -> false
 
       val to: String = ctx.read(this.fieldMap(Keys.TO_KEY))
       if (StringUtils.isBlank(to))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, "to_key 不存在") -> false
+        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, "to_key 不存在") -> false
       if (StringUtils.contains(to, "/"))
-        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_ERROR, s"to_key must not contain a slash[/]") -> false
+        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, s"to_key must not contain a slash[/]") -> false
     }
     (value, true)
   }

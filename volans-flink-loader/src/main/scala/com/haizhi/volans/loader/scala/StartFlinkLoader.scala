@@ -186,8 +186,6 @@ object StartFlinkLoader {
       , new SimpleStringSchema()
       , properties
     )
-    //设置从最早处消费，如果从savepoint处恢复则设置无效
-    myConsumer.setStartFromEarliest()
     myConsumer
   }
 
@@ -196,7 +194,7 @@ object StartFlinkLoader {
    */
   def initArgsExecutor(args: Array[String]): Unit = {
     logger.info("=========================================================================")
-    logger.info("===================Flink Streaming Application Start================")
+    logger.info("===================Flink Streaming Application Start=====================")
     logger.info("=========================================================================")
     val parameter = ParameterTool.fromArgs(args)
     val path = parameter.get("input", null)

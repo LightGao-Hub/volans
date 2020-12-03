@@ -11,7 +11,6 @@ object Parameter {
   val CONFIG: String = "config"
   val STORE_TYPE: String = "storeType"
   val SOURCES: String = "sources"
-  val SOURCE_CONFIG: String = "sourceConfig"
   val SINKS: String = "sinks"
   val SCHEMA: String = "schema"
   val ERROR_INFO: String = "errorInfo"

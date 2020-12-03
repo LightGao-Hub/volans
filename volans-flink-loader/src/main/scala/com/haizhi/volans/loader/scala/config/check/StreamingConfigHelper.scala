@@ -120,7 +120,7 @@ object StreamingConfigHelper {
     var typeOfT: Type = null
     if (storeType == StoreType.KAFKA) {
       typeOfT = new TypeToken[KafkaSourceConfig]() {}.getType
-      val kafka: KafkaSourceConfig = JSONUtils.fromJson(JSONUtils.toJson(sourceMap.get(Parameter.SOURCE_CONFIG)), typeOfT)
+      val kafka: KafkaSourceConfig = JSONUtils.fromJson(JSONUtils.toJson(sourceMap.get(Parameter.STORE_CONFIG)), typeOfT)
       Source(storeType, kafka)
     } else
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} source [$storeType] 类型不存在 ")

@@ -15,7 +15,7 @@ import scala.collection.JavaConversions._
  */
 case class SchemaVo(name: String,
                     `type`: String,
-                    var operation: String,
+                    operation: Operation,
                     fields: java.util.List[SchemaFieldVo]) extends Check  {
   //初始化校验
   check
@@ -27,18 +27,17 @@ case class SchemaVo(name: String,
    */
   override def check: Unit = {
     CheckHelper.checkNotNull(`type`, Parameter.TYPE)
-    if (StringUtils.isBlank(operation))
-      operation = "_operation"
+    operation.check
     val map = fields.toList.map(field => field.targetName -> field.sourceName).toMap
     if(!map.contains(Keys.OBJECT_KEY)) {
-      CheckHelper.checkNotNull(null, Keys.OBJECT_KEY)
+      CheckHelper.checkNotNull(null, s" schama fields ${Keys.OBJECT_KEY}")
     }
     if(isEdge) {
       if(!map.contains(Keys.FROM_KEY)) {
-        CheckHelper.checkNotNull(null, Keys.FROM_KEY)
+        CheckHelper.checkNotNull(null, s" schama fields ${Keys.FROM_KEY}")
       }
       if(!map.contains(Keys.TO_KEY)) {
-        CheckHelper.checkNotNull(null, Keys.TO_KEY)
+        CheckHelper.checkNotNull(null, s" schama fields ${Keys.TO_KEY}")
       }
     }
   }
