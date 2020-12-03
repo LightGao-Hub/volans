@@ -100,12 +100,14 @@ object CheckHelper {
   def checkSinks(map: util.Map[String, AnyRef]): Unit = {
     val sinks: AnyRef = map.get(Parameter.SINKS)
     val sinksMaps: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(sinks), new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
+    if(sinksMaps.size() == 0)
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  sinks size is 0 ")
     val affected_store = new mutable.StringBuilder()
     for (index <- 0 until sinksMaps.size()) {
       val sinkMap: util.Map[String, AnyRef] = sinksMaps.get(index)
       //检查关键parameters
-      checkNotNull(MapUtils.getString(sinkMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
-      checkNotNull(MapUtils.getString(sinkMap, Parameter.STORE_CONFIG), Parameter.STORE_CONFIG, taskId = Keys.taskInstanceId)
+      checkNotNull(MapUtils.getString(sinkMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
+      checkNotNull(MapUtils.getString(sinkMap, Parameter.STORE_CONFIG), Parameter.STORE_CONFIG)
       val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(sinkMap, Parameter.STORE_TYPE))
       if (storeType == StoreType.GDB || storeType == StoreType.ATLAS) {
         checkGDB(JSONUtils.jsonToMap(JSONUtils.toJson(sinkMap.get(Parameter.STORE_CONFIG))))
@@ -167,7 +169,7 @@ object CheckHelper {
   /**
    * 检查关键parameters是否为空
    */
-  def checkNotNull(value: String, `type`: String, taskId: String = ""): Unit = {
+  def checkNotNull(value: String, `type`: String): Unit = {
     if (StringUtils.isBlank(value))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}   parameters ${`type`} is null")
   }

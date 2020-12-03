@@ -59,12 +59,18 @@
         "isMain": "Y",
         "targetName": "object_key",
         "type": "STRING"
+      },
+      {
+        "sourceName": "$._operation",
+        "isMain": "Y",
+        "targetName": "_operation",
+        "type": "STRING"
       }
     ],
     "name": "com_new_vertex_tv_user_shanghai_1",
     "type": "edge",
     "operation": {
-      "mode": "mix",
+      "mode": "upsert",
       "operateField": "_operation"
     }
   },

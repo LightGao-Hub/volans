@@ -30,6 +30,10 @@ import collection.JavaConversions._
  * {"from_key":"123123","to_key":"345345","bicycle":{"address":1234},"object_key":"4"}
  * 多余字段的正确数据：
  * {"s":"c","a":"b","from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1"}
+ * 校验mix模式下无operatorFields/异常模式/正确模式
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1"}
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1", "_operation":"123"}
+ * {"from_key":"123123","to_key":"345345","bicycle":{"business_status":"123.1","address":1234},"object_key":"1", "_operation":"add"}
  *
  */
 case class CheckValueConversion(config: StreamingConfig) {
@@ -37,6 +41,7 @@ case class CheckValueConversion(config: StreamingConfig) {
   //所有Schema集合
   private val fieldList: Seq[SchemaFieldVo] = config.schemaVo.fields.toList
   private val fieldMap: Map[String, String] = fieldList.map(field => field.targetName -> field.sourceName).toMap
+  private val oerationFlag: Boolean = config.schemaVo.operation.isMix
 
   //检验脏数据, false为脏数据
   def checkValue(value: String): (String, Boolean) = {
@@ -61,10 +66,6 @@ case class CheckValueConversion(config: StreamingConfig) {
       if (fieldV != null)
         valueMap.put(field.sourceName, ctx.read(field.sourceName))
     }
-    //验证是MIX模式下kafka是否具备operateField字段
-    /*val operateField: String = ctx.read(config.schemaVo.operation.operateField)
-    if (config.schemaVo.operation.isMix && StringUtils.isBlank(operateField))
-      return getErrorMessageJson(object_key, value, Keys.CHECK_DIRTY_ERROR, " operation Mix mode, operateField字段值为空") -> false*/
     logger.info(s"数据校验正确 value :$value ")
 
     //类型转换
@@ -161,6 +162,19 @@ case class CheckValueConversion(config: StreamingConfig) {
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, "to_key 不存在") -> false
       if (StringUtils.contains(to, "/"))
         return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, s"to_key must not contain a slash[/]") -> false
+    }
+    //验证MIX模式下是否具备operateField字段
+    if (oerationFlag) {
+      val operateField: String = ctx.read(this.fieldMap(config.schemaVo.operation.operateField))
+      if (StringUtils.isBlank(operateField))
+        return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, " mix model operateField 不存在") -> false
+      operateField match {
+        case field if "ADD".equalsIgnoreCase(field)    =>
+        case field if "UPDATE".equalsIgnoreCase(field) =>
+        case field if "DELETE".equalsIgnoreCase(field) =>
+        case field if "UPSERT".equalsIgnoreCase(field) =>
+        case _ => return getErrorMessageJson(s"$object_key", value, Keys.CHECK_DIRTY_ERROR, s" mix model operateField 类型错误 : $operateField ") -> false
+      }
     }
     (value, true)
   }

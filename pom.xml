@@ -7,7 +7,7 @@
   <groupId>com.haizhi</groupId>
   <artifactId>volans</artifactId>
   <packaging>pom</packaging>
-  <version>1.0.0</version>
+  <version>2.32.0</version>
   <modules>
     <module>volans-common-flink-base</module>
     <module>volans-flink-loader</module>
@@ -32,7 +32,7 @@
     <janusgraph.version>0.4.1</janusgraph.version>
     <janusgraph.hbase1.version>0.4.1_hbase1</janusgraph.hbase1.version>
     <arangodb.version>4.4.0</arangodb.version>
-    <volans.version>1.0.0</volans.version>
+    <volans.version>2.32.0</volans.version>
     <scope.version>provided</scope.version>
   </properties>
 
@@ -149,6 +149,20 @@
       </plugin>
     </plugins>
   </build>
+
+  <distributionManagement>
+    <repository>
+      <id>Nexus</id>
+      <name>releases</name>
+      <url>https://mvn.stargraph.cn/nexus/content/repositories/releases</url>
+      <uniqueVersion>true</uniqueVersion>
+    </repository>
+    <snapshotRepository>
+      <id>Nexus</id>
+      <name>snapshots</name>
+      <url>https://mvn.stargraph.cn/nexus/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 
   <repositories>
     <repository>

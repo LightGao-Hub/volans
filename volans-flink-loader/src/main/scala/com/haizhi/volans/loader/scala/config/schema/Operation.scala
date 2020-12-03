@@ -14,7 +14,7 @@ case class Operation(mode: String, var operateField: String) extends Check {
     CheckHelper.checkNotNull(mode, "Operation mode")
     val operateMode: OperationMode = OperationMode.findStoreType(mode)
     if(operateMode == OperationMode.MIX)
-      CheckHelper.checkNotNull(operateField, "operateField")
+      CheckHelper.checkNotNull(operateField, " operateField is null ")
   }
 
   def isMix: Boolean = {

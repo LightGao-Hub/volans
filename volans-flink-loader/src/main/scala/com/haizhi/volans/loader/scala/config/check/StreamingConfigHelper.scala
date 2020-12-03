@@ -115,7 +115,7 @@ object StreamingConfigHelper {
     val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCES)),
       new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
     val sourceMap: util.Map[String, AnyRef] = sourceList.get(0)
-    CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
+    CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
     val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(sourceMap, Parameter.STORE_TYPE))
     var typeOfT: Type = null
     if (storeType == StoreType.KAFKA) {
@@ -162,14 +162,14 @@ object StreamingConfigHelper {
   def getLogInfo(map: util.Map[String, AnyRef]): LogInfo = {
     val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
     val logMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.LOG_INFO)))
-    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE, taskId = Keys.taskInstanceId)
+    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
     val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(logMap, Parameter.STORE_TYPE))
     var typeOfT: Type = null
     if (storeType == StoreType.FILE)
       typeOfT = new TypeToken[FileConfig]() {}.getType
     else
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} errorSink [$storeType] 类型不存在 ")
-    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.CONFIG), Parameter.CONFIG, taskId = Keys.taskInstanceId)
+    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.CONFIG), Parameter.CONFIG)
     val value:FileConfig = JSONUtils.fromJson(JSONUtils.toJson(logMap.get(Parameter.CONFIG)), typeOfT)
     LogInfo(storeType, value)
   }

@@ -5,7 +5,7 @@
     <parent>
         <artifactId>volans</artifactId>
         <groupId>com.haizhi</groupId>
-        <version>1.0.0</version>
+        <version>2.32.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -16,7 +16,7 @@
         <dependency>
             <groupId>com.haizhi</groupId>
             <artifactId>volans-common-flink-base</artifactId>
-            <version>1.0.0</version>
+            <version>2.32.0</version>
         </dependency>
         <dependency>
             <groupId>commons-cli</groupId>
@@ -37,7 +37,7 @@
         <dependency>
             <groupId>com.haizhi</groupId>
             <artifactId>volans-flink-sink</artifactId>
-            <version>1.0.0</version>
+            <version>2.32.0</version>
         </dependency>
         <!-- sinks end -->
 
@@ -45,7 +45,7 @@
     <profiles>
 
         <profile>
-            <id>loder-deploy</id>
+            <id>loader-deploy</id>
             <build>
                 <plugins>
                     <plugin>
@@ -107,7 +107,7 @@
             </build>
         </profile>
         <profile>
-            <id>loder-bigJar</id>
+            <id>loader-bigJar</id>
             <activation>
                 <property>
                     <name>bigJar</name>

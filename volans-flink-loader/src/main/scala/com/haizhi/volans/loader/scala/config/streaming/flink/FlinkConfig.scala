@@ -29,7 +29,7 @@ case class FlinkConfig(var parallelism: Int = 3,
    * @return
    */
   override def check: Unit = {
-    CheckHelper.checkNotNull(checkPoint, Parameter.CHECKPOINT, taskId = Keys.taskInstanceId)
+    CheckHelper.checkNotNull(checkPoint, Parameter.CHECKPOINT)
     if (parallelism == 0)
       parallelism = 3
     if (checkpointInterval == 0)
