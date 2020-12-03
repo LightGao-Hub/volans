@@ -3,7 +3,7 @@ package com.haizhi.volans.sink.component
 import java.util
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.constant.{FieldType, JavaFieldType, Keys, OperationMode, StoreType}
+import com.haizhi.volans.sink.config.constant.{CoreConstants, FieldType, JavaFieldType, Keys, OperationMode, StoreType}
 import com.haizhi.volans.sink.config.key.RowKeyGetter
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.server.HBaseDao
@@ -45,12 +45,19 @@ class HbaseSink(override var storeType: StoreType,
   override def invoke(elements: Iterable[String], context: SinkFunction.Context[_]): Unit = {
     val table = hbaseDao.getTable(storeConfig.table)
 
-    val deleteFlag: Boolean = (operationMode == OperationMode.DELETE)
+    // 删除标识
+    var deleteFlag: Boolean = operationMode == OperationMode.DELETE
 
     val filteredTuple = elements.map(record => {
       val recordMap = JSONUtils.jsonToJavaMap(record)
       validateAndMerge(recordMap)
-//      val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
+      if(operationMode == OperationMode.MIX){
+        val operationValue = recordMap.get(schemaVo.operation.operateField)
+        if(operationValue != null){
+          deleteFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(operationValue.toString)
+          recordMap.remove(schemaVo.operation.operateField)
+        }
+      }
       (recordMap, deleteFlag)
     }
     )
@@ -67,9 +74,6 @@ class HbaseSink(override var storeType: StoreType,
       .filter(!_._2)
       .map(element => {
         val recordMap = element._1
-        if (recordMap.get(Keys._OPERATION) != null) {
-          recordMap.remove(Keys._OPERATION)
-        }
         val put = new Put(Bytes.toBytes(recordMap.get(Keys._ROW_KEY).toString))
         val iter = recordMap.entrySet().iterator()
         while (iter.hasNext) {
@@ -83,12 +87,12 @@ class HbaseSink(override var storeType: StoreType,
         put
       }).toList
 
-    if (deleteList.size > 0) {
+    if (deleteList != null && deleteList.size > 0) {
       val deletePuts: util.List[Delete] = new util.ArrayList[Delete](deleteList.size)
       deleteList.foreach(deletePuts.add(_))
       hbaseDao.bulkDelete(deletePuts, table, storeConfig.importBatchSize)
     }
-    if (upsertList.size > 0) {
+    if (upsertList != null && upsertList.size > 0) {
       hbaseDao.bulkUpsert(upsertList.asJava, table, storeConfig.importBatchSize)
     }
     hbaseDao.close(table)
