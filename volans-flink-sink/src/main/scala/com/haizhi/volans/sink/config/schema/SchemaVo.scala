@@ -9,7 +9,7 @@ import scala.collection.JavaConversions._
  * Created by zhuhan on 2019/8/8.
  */
 case class SchemaVo(name: String,
-                    operation: String = "_operation",
+                    operation: Operation,
                     `type`: String,
                     fields: java.util.List[SchemaFieldVo]) {
 

@@ -3,7 +3,7 @@ package com.haizhi.volans.sink.component
 import java.util
 
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.constant.{CoreConstants, FieldType, JavaFieldType, Keys, StoreType}
+import com.haizhi.volans.sink.config.constant.{FieldType, JavaFieldType, Keys, OperationMode, StoreType}
 import com.haizhi.volans.sink.config.key.RowKeyGetter
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.server.HBaseDao
@@ -30,7 +30,7 @@ class HbaseSink(override var storeType: StoreType,
   override var uid: String = "Hbase"
   private val hbaseDao: HBaseDao = new HBaseDao()
   private var fieldTypeMap: Map[String, JavaFieldType] = _
-
+  private var operationMode: OperationMode = _
 
   override def open(parameters: Configuration): Unit = {
     hbaseDao.init(storeConfig)
@@ -39,16 +39,19 @@ class HbaseSink(override var storeType: StoreType,
     fieldTypeMap = schemaVo.getScalaFields.map(elem => {
       (elem._1, FieldType.getJavaFieldType(elem._2.`type`))
     })
+    this.operationMode = OperationMode.findStoreType(schemaVo.operation.mode)
   }
 
   override def invoke(elements: Iterable[String], context: SinkFunction.Context[_]): Unit = {
     val table = hbaseDao.getTable(storeConfig.table)
 
+    val deleteFlag: Boolean = (operationMode == OperationMode.DELETE)
+
     val filteredTuple = elements.map(record => {
       val recordMap = JSONUtils.jsonToJavaMap(record)
       validateAndMerge(recordMap)
-      val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
-      (recordMap, filterFlag)
+//      val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
+      (recordMap, deleteFlag)
     }
     )
 

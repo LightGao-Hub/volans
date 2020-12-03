@@ -5,7 +5,7 @@ import java.util
 import com.arangodb.model.DocumentImportOptions
 import com.arangodb.model.DocumentImportOptions.OnDuplicate
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
-import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, StoreType}
+import com.haizhi.volans.sink.config.constant.{CoreConstants, Keys, OperationMode, StoreType}
 import com.haizhi.volans.sink.server.AtlasDao
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreAtlasConfig
@@ -25,6 +25,7 @@ class ArangoDBSink(override var storeType: StoreType,
   private val logger = LoggerFactory.getLogger(classOf[ArangoDBSink])
   override var uid: String = "ArangoDB"
   private val atlasDao = new AtlasDao()
+  private var operationMode: OperationMode = _
 
   /**
    * 初始化
@@ -35,6 +36,7 @@ class ArangoDBSink(override var storeType: StoreType,
     storeConfig.collectionType = schemaVo.`type`
     atlasDao.initClient(storeConfig)
     atlasDao.createTableIfNecessary(storeConfig)
+    this.operationMode = OperationMode.findStoreType(schemaVo.operation.mode)
   }
 
   /**
@@ -44,29 +46,46 @@ class ArangoDBSink(override var storeType: StoreType,
    * @param context
    */
   override def invoke(elements: Iterable[String], context: SinkFunction.Context[_]): Unit = {
-    val filteredTuple = elements.map(record => {
+    /*val filteredTuple = elements.map(record => {
       val recordMap = JSONUtils.jsonToJavaMap(record)
       validateAndMerge(recordMap)
       val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
       recordMap.remove(schemaVo.operation)
       (JSONUtils.toJson(recordMap), filterFlag)
     }
+    ).toList*/
+
+    //    // Delete List
+    //    deleteList = filteredTuple.filter(_._2).map(_._1)
+    //    logger.debug(s"arango delete list: $deleteList")
+    //    // Upsert List
+    //    upsertList = filteredTuple.filter(!_._2).map(_._1)
+    //    logger.debug(s"arango delete list: $upsertList")
+
+    /*  if (deleteList.size > 0 || upsertList.size > 0) {
+    val col = atlasDao.getArangoDB().db(storeConfig.database).collection(storeConfig.collection)
+    if (deleteList.size > 0) {
+      atlasDao.deleteArango(deleteList, col, storeConfig.importBatchSize)
+    }
+    if (upsertList.size > 0) {
+      atlasDao.updateArango(upsertList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
+    }
+  }*/
+
+    val recordList = elements.map(record => {
+      val recordMap = JSONUtils.jsonToJavaMap(record)
+      validateAndMerge(recordMap)
+      JSONUtils.toJson(recordMap)
+    }
     ).toList
 
-    // Delete List
-    val deleteList = filteredTuple.filter(_._2).map(_._1)
-    logger.debug(s"arango delete list: $deleteList")
-    // Upsert List
-    val upsertList = filteredTuple.filter(!_._2).map(_._1)
-    logger.debug(s"arango delete list: $upsertList")
-
-    if (deleteList.size > 0 || upsertList.size > 0) {
+    if (recordList != null && recordList.size > 0) {
       val col = atlasDao.getArangoDB().db(storeConfig.database).collection(storeConfig.collection)
-      if (deleteList.size > 0) {
-        atlasDao.deleteArango(deleteList, col, storeConfig.importBatchSize)
-      }
-      if (upsertList.size > 0) {
-        atlasDao.updateArango(upsertList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
+      operationMode match {
+        case OperationMode.DELETE =>
+          atlasDao.deleteArango(recordList, col, storeConfig.importBatchSize)
+        case OperationMode.UPSERT =>
+          atlasDao.updateArango(recordList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
       }
     }
   }
