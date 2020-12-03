@@ -46,48 +46,37 @@ class ArangoDBSink(override var storeType: StoreType,
    * @param context
    */
   override def invoke(elements: Iterable[String], context: SinkFunction.Context[_]): Unit = {
-    /*val filteredTuple = elements.map(record => {
+    // 删除标识
+    var deleteFlag = operationMode == OperationMode.DELETE
+    val filteredTuple = elements.map(record => {
       val recordMap = JSONUtils.jsonToJavaMap(record)
       validateAndMerge(recordMap)
-      val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
-      recordMap.remove(schemaVo.operation)
-      (JSONUtils.toJson(recordMap), filterFlag)
-    }
-    ).toList*/
-
-    //    // Delete List
-    //    deleteList = filteredTuple.filter(_._2).map(_._1)
-    //    logger.debug(s"arango delete list: $deleteList")
-    //    // Upsert List
-    //    upsertList = filteredTuple.filter(!_._2).map(_._1)
-    //    logger.debug(s"arango delete list: $upsertList")
-
-    /*  if (deleteList.size > 0 || upsertList.size > 0) {
-    val col = atlasDao.getArangoDB().db(storeConfig.database).collection(storeConfig.collection)
-    if (deleteList.size > 0) {
-      atlasDao.deleteArango(deleteList, col, storeConfig.importBatchSize)
-    }
-    if (upsertList.size > 0) {
-      atlasDao.updateArango(upsertList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
-    }
-  }*/
-
-    val recordList = elements.map(record => {
-      val recordMap = JSONUtils.jsonToJavaMap(record)
-      validateAndMerge(recordMap)
-      JSONUtils.toJson(recordMap)
+      if (operationMode == OperationMode.MIX) {
+        val operationValue = recordMap.get(schemaVo.operation.operateField)
+        if (operationValue != null) {
+          deleteFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(operationValue.toString)
+          recordMap.remove(schemaVo.operation.operateField)
+        }
+      }
+      (JSONUtils.toJson(recordMap), deleteFlag)
     }
     ).toList
 
-    if (recordList != null && recordList.size > 0) {
+    // Delete List
+    val deleteList = filteredTuple.filter(_._2).map(_._1)
+    logger.debug(s"arango delete list: $deleteList")
+    if (deleteList != null && deleteList.size > 0) {
       val col = atlasDao.getArangoDB().db(storeConfig.database).collection(storeConfig.collection)
-      operationMode match {
-        case OperationMode.DELETE =>
-          atlasDao.deleteArango(recordList, col, storeConfig.importBatchSize)
-        case OperationMode.UPSERT =>
-          atlasDao.updateArango(recordList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
-      }
+      atlasDao.deleteArango(deleteList, col, storeConfig.importBatchSize)
     }
+    // Upsert List
+    val upsertList = filteredTuple.filter(!_._2).map(_._1)
+    logger.debug(s"arango delete list: $upsertList")
+    if (upsertList != null && upsertList.size > 0) {
+      val col = atlasDao.getArangoDB().db(storeConfig.database).collection(storeConfig.collection)
+      atlasDao.updateArango(upsertList, col, new DocumentImportOptions().onDuplicate(OnDuplicate.update), storeConfig.importBatchSize)
+    }
+
   }
 
   /**

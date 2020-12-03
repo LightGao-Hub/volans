@@ -35,37 +35,28 @@ class RestEsSink(override var storeType: StoreType,
   }
 
   override def invoke(elements: Iterable[String], context: SinkFunction.Context[_]): Unit = {
-    var deleteList: List[String] = null
-    var upsertList: List[java.util.Map[String, Object]] = null
+    // 删除标识
+    var deleteFlag = operationMode == OperationMode.DELETE
 
-    operationMode match {
-      case OperationMode.MIX =>
-        // filter elements
-        val filteredTuple: List[(String, java.util.Map[String, Object], Boolean)] =
-          elements.map(record => {
-            val recordMap = JSONUtils.jsonToJavaMap(record)
-            validateAndMerge(recordMap)
-            val filterFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(recordMap.get(schemaVo.operation).toString)
-            recordMap.remove(schemaVo.operation)
-            // (source string,converted map,filter flag)
-            (JSONUtils.toJson(recordMap), recordMap, filterFlag)
+    val filteredTuple: List[(String, java.util.Map[String, Object], Boolean)] =
+      elements.map(record => {
+        val recordMap = JSONUtils.jsonToJavaMap(record)
+        validateAndMerge(recordMap)
+        if (operationMode == OperationMode.MIX) {
+          val operationValue = recordMap.get(schemaVo.operation.operateField)
+          if (operationValue != null) {
+            deleteFlag = recordMap.get(schemaVo.operation) != null && CoreConstants.OPERATION_DELETE.equalsIgnoreCase(operationValue.toString)
+            recordMap.remove(schemaVo.operation.operateField)
           }
-          ).toList
-        deleteList = filteredTuple.filter(_._3).map(_._2.get(Keys.OBJECT_KEY).toString)
-        upsertList = filteredTuple.filter(!_._3).map(_._2)
-      case OperationMode.DELETE =>
-        deleteList = elements.map(record => {
-          val recordMap = JSONUtils.jsonToJavaMap(record)
-          validateAndMerge(recordMap)
-          recordMap.get(Keys.OBJECT_KEY).toString
-        }).toList
-      case OperationMode.UPSERT =>
-        upsertList = elements.map(record => {
-          val recordMap = JSONUtils.jsonToJavaMap(record)
-          validateAndMerge(recordMap)
-          recordMap
-        }).toList
-    }
+        }
+        // (source string,converted map,filter flag)
+        (JSONUtils.toJson(recordMap), recordMap, deleteFlag)
+      }
+      ).toList
+
+    val deleteList = filteredTuple.filter(_._3).map(_._2.get(Keys.OBJECT_KEY).toString)
+    val upsertList = filteredTuple.filter(!_._3).map(_._2)
+
     // Delete List
     if (deleteList != null && deleteList.size > 0) {
       logger.debug(s"es delete list: $deleteList")
