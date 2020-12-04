@@ -63,7 +63,7 @@
     "name": "com_new_vertex_tv_user_shanghai_1",
     "type": "edge",
     "operation": {
-      "mode": "upsert",
+      "mode": "UPSERT",
       "operateField": "_operation"
     }
   },
@@ -159,7 +159,6 @@
         "database": "bigdata_test",
         "table": "tv_user4",
         "rollingPolicy": {
-          "workDir": "hdfs:///user/work/bigdata/hive",
           "rolloverEnable": true,
           "maxPartSize": 128,
           "rolloverInterval": 60,
