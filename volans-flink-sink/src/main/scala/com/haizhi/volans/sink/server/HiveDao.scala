@@ -2,14 +2,10 @@ package com.haizhi.volans.sink.server
 
 import java.util.Date
 
-import com.haizhi.volans.sink.config.constant.HiveStoreType
-import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, Table}
+import org.apache.hadoop.hive.metastore.api.{Partition, Table}
 import org.slf4j.LoggerFactory
-
-import scala.collection.mutable.ListBuffer
 
 /**
  * Author pengxb
@@ -29,112 +25,29 @@ class HiveDao extends Serializable {
     client.getTable(database, table)
   }
 
-  def getTableLocation(database: String, table: String): String = {
-    getTable(database, table).getSd.getLocation
-  }
-
-  def getStoreType(database: String, table: String): String = {
-    getStoreType(getTable(database, table))
-  }
-
-
   /**
-   * 获取Hive表字段列表，不包括分区字段
+   * 获取分区信息
    *
-   * @param table
-   * @return List[(field,type)]
-   */
-  def getFieldSchema(table: Table): List[(String, String)] = {
-    val cols = table.getSd.getCols
-    val list = new ListBuffer[(String, String)]
-
-    for (i <- 0 until cols.size()) {
-      list.append((cols.get(i).getName, cols.get(i).getType))
-    }
-    list.toList
-  }
-
-  /**
-   * 获取Hive表字段列表，包括分区字段
-   *
-   * @param table
+   * @param database  数据库
+   * @param table     表
+   * @param fiterExpr 过滤条件
+   * @param maxPart   返回分区数目
    * @return
    */
-  def getAllFieldSchema(table: Table): List[(String, String)] = {
-    val cols = table.getSd.getCols
-    val list = new ListBuffer[(String, String)]
-
-    // 常规字段
-    for (i <- 0 until cols.size()) {
-      list.append((cols.get(i).getName, cols.get(i).getType))
-    }
-    // 分区字段
-    val partitionKeys = table.getPartitionKeys
-    for (i <- 0 until partitionKeys.size()) {
-      list.append((partitionKeys.get(i).getName, partitionKeys.get(i).getType))
-    }
-    list.toList
+  def listPartitionByFilter(database: String, table: String, fiterExpr: String, maxPart: Short): java.util.List[Partition] = {
+    client.listPartitionsByFilter(database, table, fiterExpr, maxPart)
   }
 
   /**
-   * 获取Hive表字段map集合
+   * 获取分区信息
    *
    * @param table
+   * @param fiterExpr
+   * @param maxPart
    * @return
    */
-  def getFieldSchemaMap(table: Table): java.util.Map[String, String] = {
-    val cols = table.getSd.getCols
-    val schemaMap = new java.util.HashMap[String, String]
-    for (i <- 0 until cols.size()) {
-      schemaMap.put(cols.get(i).getName, cols.get(i).getType)
-    }
-    schemaMap
-  }
-
-  /**
-   * 获取字段分隔符
-   *
-   * @param table
-   * @return
-   */
-  def getFieldDelimited(table: Table): String = {
-    table.getSd.getSerdeInfo.getParameters.get("field.delim")
-  }
-
-  /**
-   * 获取表存储格式
-   *
-   * @param table
-   * @return
-   */
-  def getStoreType(table: Table): String = {
-    var serLib = table.getSd.getSerdeInfo.getSerializationLib
-    if (StringUtils.isBlank(serLib)) {
-      serLib = table.getSd.getInputFormat
-    }
-    HiveStoreType.getStoreType(serLib)
-  }
-
-  /**
-   * 获取分区schema信息
-   * @param table
-   * @return
-   */
-  def getPartitionSchema(table: Table): List[(String, String)] = {
-    table.getPartitionKeys
-      .toArray(Array[FieldSchema]())
-      .toList
-      .map(schema => (schema.getName, schema.getType))
-  }
-
-  /**
-   * 获取分区列信息
-   *
-   * @param table
-   * @return
-   */
-  def getPartitionKeys(table: Table): List[String] = {
-    table.getPartitionKeys.toArray(Array[FieldSchema]()).toList.map(_.getName)
+  def listPartitionByFilter(table: Table, fiterExpr: String, maxPart: Short): java.util.List[Partition] = {
+    listPartitionByFilter(table.getDbName, table.getTableName, fiterExpr, maxPart)
   }
 
   /**
@@ -146,7 +59,6 @@ class HiveDao extends Serializable {
    */
   def addPartition(table: Table, values: java.util.List[String], partitionLocation: String): Unit = {
     val partition = new Partition()
-    // table StorageDescriptor深拷贝
     val partitionSd = table.getSd.deepCopy()
     partitionSd.setLocation(table.getSd.getLocation + partitionLocation)
     partition.setSd(partitionSd)

@@ -1,6 +1,6 @@
 package com.haizhi.volans.sink.util
 
-import com.haizhi.volans.sink.config.constant.HiveStoreType
+import com.haizhi.volans.sink.config.constant.{HiveFieldType, HiveStoreType}
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.hive.metastore.api.{FieldSchema, Partition, Table}
 
@@ -38,6 +38,42 @@ object HiveUtils {
       serLib = table.getSd.getInputFormat
     }
     getTableStoredType(serLib)
+  }
+
+  /**
+   * 判断字段是否是数值类型
+   *
+   * @param fieldType
+   * @return
+   */
+  def isNumericalValue(fieldType: String): Boolean = {
+    fieldType.toLowerCase match {
+      case HiveFieldType.TINYINT
+           | HiveFieldType.SMALLINT
+           | HiveFieldType.INT
+           | HiveFieldType.BIGINT
+           | HiveFieldType.FLOAT
+           | HiveFieldType.DOUBLE
+           | HiveFieldType.BINARY => true
+      case _ => false
+    }
+  }
+
+  /**
+   * 判读数据类型是否支持过滤表达式
+   *
+   * @param fieldType
+   * @return
+   */
+  def ensureSupportFilterExpr(fieldType: String): Boolean = {
+    fieldType.toLowerCase match {
+      case HiveFieldType.TINYINT
+           | HiveFieldType.SMALLINT
+           | HiveFieldType.INT
+           | HiveFieldType.BIGINT
+           | HiveFieldType.STRING => true
+      case _ => false
+    }
   }
 
   /**
@@ -109,10 +145,40 @@ object HiveUtils {
   }
 
   /**
+   * 获取分区过滤表达式
+   * Exmaple: year=2020,month=12 => year="2020" AND month="12"
+   *
+   * @param table
+   * @param partValues
+   */
+  def getPartitionFilterExpr(table: Table, partValues: java.util.List[String]): String = {
+    // 分区字段schema
+    val partitionSchemaList = getPartitionSchema(table)
+    val filterExprBuffer = new StringBuilder()
+    for (i <- 0 until partValues.size) {
+      val partitionTuple = partitionSchemaList(i)
+      if (ensureSupportFilterExpr(partitionTuple._2)) {
+        filterExprBuffer.append(partitionTuple._1).append("=")
+        // 非数值类型的分区字段值，需要加上双引号
+        if (!isNumericalValue(partitionTuple._2)) {
+          filterExprBuffer.append("\"").append(partValues.get(i)).append("\"")
+        } else {
+          filterExprBuffer.append(partValues.get(i))
+        }
+        filterExprBuffer.append(" AND ")
+      }
+    }
+    if (filterExprBuffer.length > 0) {
+      filterExprBuffer.delete(filterExprBuffer.length - " AND ".length, filterExprBuffer.length)
+    }
+    filterExprBuffer.toString
+  }
+
+  /**
    * 获取Hive表字段列表，不包括分区字段
    *
    * @param table
-   * @return List[(field,type)]
+   * @return List[(fieldName,fieldType)]
    */
   def getFieldSchema(table: Table): List[(String, String)] = {
     val cols = table.getSd.getCols
@@ -128,7 +194,7 @@ object HiveUtils {
    * 获取Hive表字段列表，包括分区字段
    *
    * @param table
-   * @return
+   * @return List[(fieldName,fieldType)]
    */
   def getAllFieldSchema(table: Table): List[(String, String)] = {
     val cols = table.getSd.getCols
@@ -143,6 +209,30 @@ object HiveUtils {
       list.append((partitionKeys.get(i).getName, partitionKeys.get(i).getType))
     }
     list.toList
+  }
+
+  /**
+   * 判断分区是否存在
+   *
+   * @param partValues
+   * @param partitionList
+   * @return
+   */
+  def existsPartition(partValues: java.util.List[String], partitionList: java.util.List[Partition]): Boolean = {
+    for (i <- 0 until partitionList.size()) {
+      val partition = partitionList.get(i)
+      val partitionValueList = partition.getValues
+      var matchedSize = 0
+      for (j <- 0 until partitionValueList.size()) {
+        if (partValues.get(j).equals(partitionValueList.get(j))) {
+          matchedSize += 1
+        }
+      }
+      if (matchedSize == partitionValueList.size()) {
+        return true
+      }
+    }
+    false
   }
 
 }

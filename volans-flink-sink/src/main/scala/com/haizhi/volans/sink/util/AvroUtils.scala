@@ -3,7 +3,6 @@ package com.haizhi.volans.sink.util
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, DataInputStream}
 
 import com.haizhi.volans.sink.config.constant.{AvroFieldType, HiveFieldType}
-import com.haizhi.volans.sink.server.HiveDao
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericDatumWriter, GenericRecord}
 import org.apache.avro.io.{DatumReader, Decoder, DecoderFactory, Encoder, EncoderFactory}
@@ -99,19 +98,6 @@ object AvroUtils {
     writer.write(datum, encoder)
     encoder.flush();
     outputStream.toByteArray();
-  }
-
-  def main(args: Array[String]): Unit = {
-
-//    val a = classOf[GenericRecord].newInstance()
-//    println(a)
-//    sys.exit(0)
-    val hiveDao = new HiveDao()
-    val table = hiveDao.getTable("bigdata_test", "person_orc")
-    val fieldSchemaList = hiveDao.getAllFieldSchema(table)
-    val shcema = convertHiveFieldToAvro(fieldSchemaList)
-    println(shcema)
-    hiveDao.shutdown()
   }
 
 }

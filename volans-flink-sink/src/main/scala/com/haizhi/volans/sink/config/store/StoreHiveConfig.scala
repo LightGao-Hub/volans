@@ -7,10 +7,10 @@ import com.haizhi.volans.sink.config.schema.RollingPolicyVo
  */
 case class StoreHiveConfig(database: String = "default",
                            table: String,
-                           user: String,
-                           password: String,
-                           delField: String,
-                           delFieldFlag: String,
+                           user: String = null,
+                           password: String = null,
+                           delField: String = null,
+                           delFieldFlag: String = null,
                            rollingPolicy: RollingPolicyVo
                           ) extends StoreConfig {
   override def getGraph: String = {
