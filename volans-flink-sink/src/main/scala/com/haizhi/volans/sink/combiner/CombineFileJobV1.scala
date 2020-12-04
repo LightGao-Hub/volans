@@ -5,7 +5,7 @@ import java.util.Date
 import com.haizhi.volans.sink.config.store.StoreHiveConfig
 import com.haizhi.volans.sink.config.constant.HiveStoreType
 import com.haizhi.volans.sink.server.HiveDao
-import com.haizhi.volans.sink.util.HDFSUtils
+import com.haizhi.volans.sink.util.{HDFSUtils, HiveUtils}
 import com.haizhi.volans.sink.utils.DateUtils
 import org.apache.hadoop.fs.{FileStatus, Path}
 import org.apache.hadoop.hive.metastore.api.{AlreadyExistsException, Table}
@@ -18,7 +18,7 @@ import scala.collection.JavaConverters._
  * Author pengxb
  * Date 2020/11/2
  */
-object CombineFileJob extends Runnable {
+object CombineFileJobV1 extends Runnable {
 
   private val logger = LoggerFactory.getLogger(getClass)
   private var storeConfig: StoreHiveConfig = _
@@ -46,7 +46,7 @@ object CombineFileJob extends Runnable {
     this.storeConfig = storeConfig
     this.table = hiveDao.getTable(storeConfig.database, storeConfig.table)
     // 表数据存储类型
-    val storeType = HiveStoreType.getStoreType(table.getSd.getInputFormat)
+    val storeType = HiveUtils.getTableStoredType(table)
     // 构建combiner
     combiner = buildCombiner(storeType)
     if (storeConfig.rollingPolicy.rolloverCheckInterval > 0) {
@@ -324,10 +324,10 @@ object CombineFileJob extends Runnable {
 
   override def run(): Unit = {
     // 表数据存储路径
-    val tableLocation = table.getSd.getLocation
+    val tableLocation = HiveUtils.getTableLocation(table)
     logger.info(s"表存储路径：$tableLocation")
     // 表分区信息
-    val partitionKeys = hiveDao.getPartitionKeys(table)
+    val partitionKeys = HiveUtils.getPartitionKeys(table)
     val combinerVo = storeConfig.rollingPolicy
     while (true) {
       try {

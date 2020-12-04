@@ -64,9 +64,9 @@ object SinkContext {
       }
       val storeConfig: StoreConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(CoreConstants.STORE_CONFIG)), jsonType)
       val sinkConfig = SinkConfig(storeType, storeConfig)
-      // sinks.add(buildSink(sinkConfig))
-      sinks.add(SinkFactory.createSink(sinkConfig, schemaVo))
-      if (storeType == StoreType.HIVE) {
+      val sink = SinkFactory.createSink(sinkConfig, schemaVo)
+      sinks.add(sink)
+      if (sink.isInstanceOf[HiveSink] && sink.asInstanceOf[HiveSink].needCombinerFileJob) {
         sinks.add(new FileHandleSink(storeType, sinkConfig.storeConfig.asInstanceOf[StoreHiveConfig]))
       }
     }

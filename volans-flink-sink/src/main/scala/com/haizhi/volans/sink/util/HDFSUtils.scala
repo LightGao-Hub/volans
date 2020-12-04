@@ -7,8 +7,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-
+import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters.seqAsJavaListConverter
 
 /**
  * Author pengxb
@@ -42,7 +42,7 @@ object HDFSUtils {
         }
       }
     } catch {
-      case e: IOException => logger.error(e.getMessage,e)
+      case e: IOException => logger.error(e.getMessage, e)
     }
     sb.result()
   }
@@ -65,18 +65,51 @@ object HDFSUtils {
   }
 
   /**
-   * 给文件名添加后缀
+   * 文件名添加后缀
+   *
+   * @param srcFile
+   * @param postFix
    */
-  def addPostFixToPath(srcPath: Path, postFix: String): Unit ={
-    rename(srcPath,new Path(srcPath +"/" + postFix))
+  def addPostFixToPath(srcFile: Path, postFix: String): Path = {
+    val destFile = new Path(srcFile + postFix)
+    fs.rename(srcFile, destFile)
+    destFile
   }
 
-  def rename(srcFile: Path, descFile: Path): Unit ={
-    fs.rename(srcFile,descFile)
+  /**
+   * 文件名批量添加后缀
+   *
+   * @param srcFileList
+   * @param postFix
+   * @return List[destFile]
+   */
+  def addPostFixToPath(srcFileList: List[Path], postFix: String): List[Path] = {
+    srcFileList.map(srcFile => {
+      addPostFixToPath(srcFile, postFix)
+    })
   }
 
-  def rename(srcFile: String, descFile: String): Unit ={
-    rename(new Path(srcFile),new Path(descFile))
+  /**
+   * 批量修改文件名
+   *
+   * @param toDoFileList List[(srcFile,destFile)]
+   * @return List[destFile]
+   */
+  def renameFileList(toDoFileList: List[(Path, Path)]): List[Path] = {
+    toDoFileList.map(fileTuple => {
+      val srcFile = fileTuple._1
+      val destFile = fileTuple._2
+      fs.rename(srcFile, destFile)
+      destFile
+    })
+  }
+
+  def rename(srcFile: Path, descFile: Path): Unit = {
+    fs.rename(srcFile, descFile)
+  }
+
+  def rename(srcFile: String, descFile: String): Unit = {
+    rename(new Path(srcFile), new Path(descFile))
   }
 
   def moveFile(srcPath: Path, destDir: Path): Unit = {
@@ -91,28 +124,30 @@ object HDFSUtils {
     }
   }
 
-  def deleteDirectory(targetDir: Path,recursive: Boolean): Unit ={
-      fs.delete(targetDir,recursive)
+  def deleteDirectory(targetDir: Path, recursive: Boolean): Unit = {
+    fs.delete(targetDir, recursive)
   }
 
-  def deleteDirectory(targetDir: String,recursive: Boolean): Unit ={
-    fs.delete(new Path(targetDir),recursive)
+  def deleteDirectory(targetDir: String, recursive: Boolean): Unit = {
+    fs.delete(new Path(targetDir), recursive)
   }
 
-  def deleteDirectoryList(targetDirList: List[Path],recursive: Boolean): Unit ={
-    for(path <- targetDirList){
-      fs.delete(path,recursive)
+  def deleteDirectoryList(targetDirList: List[Path], recursive: Boolean): Unit = {
+    for (path <- targetDirList) {
+      fs.delete(path, recursive)
     }
   }
 
-  def deleteFiles(pathList: List[Path]): Unit ={
-    for(path <- pathList){
-      fs.deleteOnExit(path)
+  def deleteFiles(pathList: List[Path]): Unit = {
+    for (path <- pathList) {
+      deleteFile(path)
     }
   }
 
-  def deleteFile(file: Path): Unit ={
-      fs.deleteOnExit(file)
+  def deleteFile(file: Path): Unit = {
+    if (fs.exists(file)) {
+      fs.delete(file, false)
+    }
   }
 
   /**
@@ -162,39 +197,71 @@ object HDFSUtils {
     fs.listStatus(pathList)
   }
 
-  def listFileStatus(targetDir: String): Array[FileStatus] ={
+  def listFileStatus(targetDir: String): Array[FileStatus] = {
     this.listFileStatus(new Path(targetDir))
   }
 
-  def listFileStatus(targetDir: Path): Array[FileStatus] ={
+  def listFileStatus(targetDir: Path): Array[FileStatus] = {
     fs.listStatus(targetDir)
   }
 
   /**
    * 列举包含文件但不包含子目录的目录
-   * @param dir 目标目录
+   *
+   * @param dir            目标目录
    * @param pathFilterList 目录名称过滤列表，如List("year","month","day")
    * @return
    */
-  def listDirectoryWithoutSubDir(dir: Path, pathFilterList: List[String]): List[Path] ={
-    val fileStatusList = fs.listStatus(dir,new PathFilter {
+  def listDirectoryWithoutSubDir(dir: Path, pathFilterList: List[String]): List[Path] = {
+    val fileStatusList = fs.listStatus(dir, new PathFilter {
       override def accept(path: Path): Boolean = {
         !pathFilterList.find(pattern => path.toString.contains(pattern)).isEmpty
       }
     })
     val buffer = new ListBuffer[Path]
     var fileCount = 0
-    for(i <- 0 until fileStatusList.length){
-      if(fileStatusList(i).isDirectory){
-        buffer ++= listDirectoryWithoutSubDir(fileStatusList(i).getPath,pathFilterList)
-      }else{
+    for (i <- 0 until fileStatusList.length) {
+      if (fileStatusList(i).isDirectory) {
+        buffer ++= listDirectoryWithoutSubDir(fileStatusList(i).getPath, pathFilterList)
+      } else {
         fileCount += 1
       }
     }
-    if(fileStatusList.length > 0 && fileCount == fileStatusList.length){
+    if (fileStatusList.length > 0 && fileCount == fileStatusList.length) {
       buffer += dir
     }
     buffer.toList
+  }
+
+  /**
+   * 根据正则表达式获取目录下的文件
+   *
+   * @param targetDir
+   * @param pattern
+   * @return
+   */
+  def listFileStatusWithPattern(targetDir: Path, pattern: Pattern): List[FileStatus] = {
+    fs.listStatus(targetDir, new PathFilter {
+      override def accept(path: Path): Boolean = {
+        println("path: " + path.getName)
+        pattern.matcher(path.getName).find()
+      }
+    }).filter(_.isFile).toList
+  }
+
+  /**
+   * 根据传入过滤条件获取目录文件
+   *
+   * @param targetDir
+   * @param filterFunc
+   * @return
+   */
+  def listFileStatusByFilter(targetDir: Path, filterFunc: String => Boolean): List[FileStatus] = {
+    fs.listStatus(targetDir, new PathFilter {
+      override def accept(path: Path): Boolean = {
+        filterFunc(path.getName)
+      }
+    }).filter(_.isFile).toList
   }
 
   def exists(path: String): Boolean = {
@@ -225,7 +292,7 @@ object HDFSUtils {
         this.fs.close()
       }
     } catch {
-      case e: Exception => logger.error(e.getMessage,e)
+      case e: Exception => logger.error(e.getMessage, e)
     } finally {
       this.fs = null
     }

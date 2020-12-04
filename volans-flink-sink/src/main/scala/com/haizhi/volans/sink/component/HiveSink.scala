@@ -8,7 +8,7 @@ import com.haizhi.volans.sink.config.constant.{HiveStoreType, StoreType}
 import com.haizhi.volans.sink.config.schema.SchemaVo
 import com.haizhi.volans.sink.config.store.StoreHiveConfig
 import com.haizhi.volans.sink.server.HiveDao
-import com.haizhi.volans.sink.util.{AvroUtils, OrcUtils}
+import com.haizhi.volans.sink.util.{AvroUtils, HiveUtils, OrcUtils}
 import org.apache.avro.Schema
 import org.apache.avro.generic.GenericRecord
 import org.apache.flink.api.common.serialization.{BulkWriter, SimpleStringEncoder}
@@ -49,6 +49,8 @@ class HiveSink(override var storeType: StoreType,
   private var avroSchemaStr: String = _
   // Vectorizer
   private var vectorizer: Vectorizer[RowData] = _
+  // 是否需要处理文件
+  private var needHandleFile: Boolean = true
 
   /**
    * 初始化
@@ -57,11 +59,14 @@ class HiveSink(override var storeType: StoreType,
     this.hiveDao = new HiveDao()
     this.table = hiveDao.getTable(storeConfig.database, storeConfig.table)
     // 获取包括partitionKey在内的Hive表字段schema信息
-    this.fieldSchemaList = hiveDao.getAllFieldSchema(table)
-    //    config.put("fieldSchemaList", fieldSchemaList)
+    this.fieldSchemaList = HiveUtils.getAllFieldSchema(table)
+    // config.put("fieldSchemaList", fieldSchemaList)
     logger.info(s"hive fieldSchema list: $fieldSchemaList")
-
-    this.tableStoredType = hiveDao.getStoreType(table)
+    // 如果未开启文件合并功能且不是分区表，则不需要启动CombinerFileJob
+    if (!storeConfig.rollingPolicy.rolloverEnable && HiveUtils.getPartitionKeys(table).size == 0) {
+      needHandleFile = false
+    }
+    this.tableStoredType = HiveUtils.getTableStoredType(table)
     // 检查storeType，目前支持的存储格式为：textFile、orc、parquet
     if (!HiveStoreType.ORC.equals(tableStoredType) && !HiveStoreType.PARQUET.eq(tableStoredType)
       && !HiveStoreType.TEXTFILE.equals(tableStoredType)) {
@@ -90,11 +95,11 @@ class HiveSink(override var storeType: StoreType,
    */
   private def buildHiveSink: StreamingFileSink[GenericRecord] = {
     // 分区字段
-    val partitionKeys = hiveDao.getPartitionKeys(table)
+    val partitionKeys = HiveUtils.getPartitionKeys(table)
     // 非分区字段
-    val fieldSchema = hiveDao.getFieldSchema(table)
+    val fieldSchema = HiveUtils.getFieldSchema(table)
     // 字段分隔符
-    val fieldDelimited = hiveDao.getFieldDelimited(table)
+    val fieldDelimited = HiveUtils.getFieldDelimited(table)
     // 自定义桶分配器
     val bucketAssigner: BasePathBucketAssigner[GenericRecord] = new BasePathBucketAssigner[GenericRecord]() {
       override def getBucketId(element: GenericRecord, context: BucketAssigner.Context): String = {
@@ -117,7 +122,7 @@ class HiveSink(override var storeType: StoreType,
 
     var streamSink: StreamingFileSink[GenericRecord] = null
     // 工作目录
-    val workDir = new Path(storeConfig.rollingPolicy.workDir)
+    val workDir = new Path(HiveUtils.getTableLocation(table))
     // parquet
     if (HiveStoreType.PARQUET.equals(tableStoredType)) {
       val writerFactory: BulkWriter.Factory[GenericRecord] =
@@ -159,7 +164,7 @@ class HiveSink(override var storeType: StoreType,
    */
   def buildHiveOrcSink: StreamingFileSink[RowData] = {
     // 分区字段
-    val partitionSchema = hiveDao.getPartitionSchema(table)
+    val partitionSchema = HiveUtils.getPartitionSchema(table)
     // 自定义桶分配器
     val bucketAssigner: BasePathBucketAssigner[RowData] = new BasePathBucketAssigner[RowData]() {
       override def getBucketId(element: RowData, context: BucketAssigner.Context): String = {
@@ -186,7 +191,8 @@ class HiveSink(override var storeType: StoreType,
     }
 
     // 工作目录
-    val workDir = new Path(storeConfig.rollingPolicy.workDir)
+    val workDir = new Path(HiveUtils.getTableLocation(table))
+
     val writerFactory: OrcBulkWriterFactory[RowData] = new OrcBulkWriterFactory(this.vectorizer, new Properties(), new Configuration())
     StreamingFileSink
       .forBulkFormat(workDir, writerFactory)
@@ -213,6 +219,15 @@ class HiveSink(override var storeType: StoreType,
 
   def getTableStoredType(): String = {
     this.tableStoredType
+  }
+
+  /**
+   * 是否需要启动CombinerFileJob（合并文件、提交分区）
+   *
+   * @return
+   */
+  def needCombinerFileJob: Boolean = {
+    this.needHandleFile
   }
 
 }

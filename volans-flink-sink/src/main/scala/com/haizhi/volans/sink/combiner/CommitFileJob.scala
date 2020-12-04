@@ -1,9 +1,8 @@
 package com.haizhi.volans.sink.combiner
 
-import com.haizhi.volans.sink.config.constant.HiveStoreType
 import com.haizhi.volans.sink.config.store.StoreHiveConfig
 import com.haizhi.volans.sink.server.HiveDao
-import com.haizhi.volans.sink.util.HDFSUtils
+import com.haizhi.volans.sink.util.{HDFSUtils, HiveUtils}
 import com.haizhi.volans.sink.utils.DateUtils
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hive.metastore.api.{AlreadyExistsException, Table}
@@ -40,15 +39,15 @@ object CommitFileJob extends Runnable {
     if (storeConfig.rollingPolicy.rolloverCheckInterval > 0) {
       this.jobInterval = storeConfig.rollingPolicy.rolloverCheckInterval * 1000
     }
-    this.storeType = HiveStoreType.getStoreType(table.getSd.getInputFormat)
+    this.storeType = HiveUtils.getTableStoredType(table)
   }
 
   override def run(): Unit = {
     // 表数据存储路径
-    val tableLocation = table.getSd.getLocation
+    val tableLocation = HiveUtils.getTableLocation(table)
     logger.info(s"表存储路径：$tableLocation")
     // 表分区信息
-    val partitionKeys = hiveDao.getPartitionKeys(table)
+    val partitionKeys = HiveUtils.getPartitionKeys(table)
     val combinerVo = storeConfig.rollingPolicy
 
     while (true) {

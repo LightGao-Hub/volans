@@ -12,18 +12,4 @@ object HiveStoreType {
   val RCFILE: String = "rcfile"
   val AVRO: String = "avro"
 
-  def getStoreType(inputFormat: String): String = {
-    if (inputFormat.contains("io.parquet")) {
-      HiveStoreType.PARQUET
-    } else if (inputFormat.contains("io.orc")) {
-      HiveStoreType.ORC
-    } else if (inputFormat.contains("io.rcfile")) {
-      HiveStoreType.RCFILE
-    } else if (inputFormat.contains("io.avro")) {
-      HiveStoreType.AVRO
-    }else {
-      HiveStoreType.TEXTFILE
-    }
-  }
-
 }
