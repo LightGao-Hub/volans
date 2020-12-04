@@ -168,7 +168,7 @@
       "storeConfig":{
         "servers": "localhost:9092",
         "groupId": "grouoId02",
-        "topic": "flink_topic3",
+        "topics": "flink_topic4",
         "config":{
         }
       }

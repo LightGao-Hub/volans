@@ -32,7 +32,11 @@ case class DirtyData(storeType: StoreType,
    * @return
    */
   override def check: Unit = {
+    if(!storeEnabled) //如果不开启错误信息记录，则无需校验
+      return
     CheckHelper.checkNotNull(taskInstanceId, Parameter.TASK_INSTANCEID)
+    if(storeRowsLimit <= 0)
+      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  dirtySink - storeRowsLimit <= 0 storeRowsLimit：[$storeRowsLimit]")
     if (dirtyConfig.isEmpy)
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  dirtySink - dirtyConfig isEmpy")
   }

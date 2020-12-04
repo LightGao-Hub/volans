@@ -119,59 +119,76 @@ object StartFlinkLoader {
    * 同一目录下一个文件自增ID只会生成一个成功的文件，例如:dirty-2-0, dirty-2-1, dirty-2-2, dirty-2-3, dirty-2-4, dirty-2-5
    */
   def getDirtySink: StreamingFileSink[String] = {
-    val config = OutputFileConfig
-      .builder()
-      .withPartPrefix("dirty")
-      .build()
+    try{
+      val config = OutputFileConfig
+        .builder()
+        .withPartPrefix("dirty")
+        .build()
 
-    val fileConfig: FileConfig = streamingConfig.errorInfo.dirtyData.dirtyConfig.asInstanceOf[FileConfig]
-    val sink: StreamingFileSink[String] = StreamingFileSink
-      .forRowFormat(new Path(fileConfig.path), new SimpleStringEncoder[String]("UTF-8"))
-      .withBucketAssigner(new DateTimeBucketAssigner("yyyy-MM-dd")) //配置桶生成规则, 按天生成
-      .withRollingPolicy(
-        OnCheckpointRollingPolicy.build()
-      )
-      .withOutputFileConfig(config)
-      .build()
-    sink
+      val fileConfig: FileConfig = streamingConfig.errorInfo.dirtyData.dirtyConfig.asInstanceOf[FileConfig]
+      val sink: StreamingFileSink[String] = StreamingFileSink
+        .forRowFormat(new Path(fileConfig.path), new SimpleStringEncoder[String]("UTF-8"))
+        .withBucketAssigner(new DateTimeBucketAssigner("yyyy-MM-dd")) //配置桶生成规则, 按天生成
+        .withRollingPolicy(
+          OnCheckpointRollingPolicy.build()
+        )
+        .withOutputFileConfig(config)
+        .build()
+      sink
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  getDirtySink 函数创建 StreamingFileSink 异常")
+    }
   }
 
   /**
    * checkPoint 支持路径：hdfs://localhost:9000 或本地路径: file:///User/hzxt/log
    */
   def setCheckPoint(env: StreamExecutionEnvironment): Unit = {
-    //设置时间语义
-    env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime)
-    //设置全局并行度
-    env.setParallelism(streamingConfig.flinkConfig.parallelism)
-    //设置检查点，默认异步提交，使用FS作为状态后端
-    val stateBackend: StateBackend = new FsStateBackend(streamingConfig.flinkConfig.checkPoint)
-    env.setStateBackend(stateBackend)
-    // 每 1000ms * 60 开始一次 checkpoint
-    env.enableCheckpointing(streamingConfig.flinkConfig.checkpointInterval)
-    // 设置模式为精确一次
-    env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
-    // 确认 checkpoints 之间的最短时间间隔会进行 5000 ms
-    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(5000)
-    // Checkpoint 必须在一分钟内完成，否则就会被抛弃
-    env.getCheckpointConfig.setCheckpointTimeout(60000)
-    // 同一时间只允许一个 checkpoint 进行
-    env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
-    // 允许在有更近 savepoint 时回退到 checkpoint
-    env.getCheckpointConfig.setPreferCheckpointForRecovery(true)
-    // 可容忍检查点失败个数：3
-    env.getCheckpointConfig.setTolerableCheckpointFailureNumber(3)
-    // 开启在 job 中止后仍然保留的 externalized checkpoints
-    env.getCheckpointConfig.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
-
+    try {
+      //设置时间语义
+      env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime)
+      //设置全局并行度
+      env.setParallelism(streamingConfig.flinkConfig.parallelism)
+      //设置检查点，默认异步提交，使用FS作为状态后端
+      val stateBackend: StateBackend = new FsStateBackend(streamingConfig.flinkConfig.checkPoint)
+      env.setStateBackend(stateBackend)
+      // 每 1000ms * 60 开始一次 checkpoint
+      env.enableCheckpointing(streamingConfig.flinkConfig.checkpointInterval)
+      // 设置模式为精确一次
+      env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
+      // 确认 checkpoints 之间的最短时间间隔会进行 5000 ms
+      env.getCheckpointConfig.setMinPauseBetweenCheckpoints(5000)
+      // Checkpoint 必须在一分钟内完成，否则就会被抛弃
+      env.getCheckpointConfig.setCheckpointTimeout(60000)
+      // 同一时间只允许一个 checkpoint 进行
+      env.getCheckpointConfig.setMaxConcurrentCheckpoints(1)
+      // 允许在有更近 savepoint 时回退到 checkpoint
+      env.getCheckpointConfig.setPreferCheckpointForRecovery(true)
+      // 可容忍检查点失败个数：3
+      env.getCheckpointConfig.setTolerableCheckpointFailureNumber(3)
+      // 开启在 job 中止后仍然保留的 externalized checkpoints
+      env.getCheckpointConfig.enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  setCheckPoint 函数创建 CheckPoint 异常")
+    }
   }
 
   def setRestart(env: StreamExecutionEnvironment): Unit = {
-    // 设置重启策略为固定重启策略
-    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-      streamingConfig.flinkConfig.restart, // 重启尝试次数，每两次连续的重启尝试之间等待 10 秒钟。
-      org.apache.flink.api.common.time.Time.of(10, TimeUnit.SECONDS)
-    ))
+    try{
+      // 设置重启策略为固定重启策略
+      env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
+        streamingConfig.flinkConfig.restart, // 重启尝试次数，每两次连续的重启尝试之间等待 10 秒钟。
+        org.apache.flink.api.common.time.Time.of(10, TimeUnit.SECONDS)
+      ))
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  setRestart 设置重启次数异常")
+    }
   }
 
   /**
@@ -180,23 +197,30 @@ object StartFlinkLoader {
    * @return
    */
   def getKafkaSource: FlinkKafkaConsumer[String] = {
-    val properties: Properties = new Properties()
-    val kafkaSourceConfig = streamingConfig.source.kafkaSourceConfig
-    properties.setProperty("bootstrap.servers", kafkaSourceConfig.servers)
-    properties.setProperty("group.id", kafkaSourceConfig.groupId)
-    properties.setProperty("session.timeout.ms", "60000")
-    kafkaSourceConfig.config.asScala.foreach {
-      case (key, value) =>
-        properties.setProperty(key, String.valueOf(value))
+    try{
+      val properties: Properties = new Properties()
+      val kafkaSourceConfig = streamingConfig.source.kafkaSourceConfig
+      properties.setProperty("bootstrap.servers", kafkaSourceConfig.servers)
+      properties.setProperty("group.id", kafkaSourceConfig.groupId)
+      properties.setProperty("session.timeout.ms", "60000")
+      if(kafkaSourceConfig.config != null) {
+        kafkaSourceConfig.config.asScala.foreach {
+          case (key, value) =>
+            properties.setProperty(key, String.valueOf(value))
+        }
+      }
+      //connect Kafka, 可支持kafka >= 1.0.0
+      val myConsumer: FlinkKafkaConsumer[String] = new FlinkKafkaConsumer(
+        kafkaSourceConfig.topics
+        , new SimpleStringSchema()
+        , properties
+      )
+      myConsumer
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  getKafkaSource 函数创建 FlinkKafkaConsumer 异常")
     }
-
-    //connect Kafka, 可支持kafka >= 1.0.0
-    val myConsumer: FlinkKafkaConsumer[String] = new FlinkKafkaConsumer(
-      kafkaSourceConfig.topic
-      , new SimpleStringSchema()
-      , properties
-    )
-    myConsumer
   }
 
   /**
@@ -221,12 +245,18 @@ object StartFlinkLoader {
    * 将异常信息写入errorSink
    */
   def doLogHappenError(e: Exception): Unit = {
-    val errorLog: String = ErrorCode.toJSON(task_instance_id = Keys.taskInstanceId, code = ErrorCode.STREAMING_ERROR, message = e.getMessage)
-    logger.error(errorLog)
-    if (logExecutor != null) //需要用errorExceutor的errorWriter写出异常数据
-      logExecutor.LogWriter(errorLog)
-    else if (Keys.logInfo != null) //如果errorSink存在，代表errorSink配置后面出现了异常，可以先生成errorExcecutor
-      StreamingExecutorHelper.getLogExecutor(Keys.logInfo).LogWriter(errorLog)
+    try {
+      val errorLog: String = ErrorCode.toJSON(task_instance_id = Keys.taskInstanceId, code = ErrorCode.STREAMING_ERROR, message = e.getMessage)
+      logger.error(errorLog)
+      if (logExecutor != null) //需要用errorExceutor的errorWriter写出异常数据
+        logExecutor.LogWriter(errorLog)
+      else if (Keys.logInfo != null) //如果errorSink存在，代表errorSink配置后面出现了异常，可以先生成errorExcecutor
+        StreamingExecutorHelper.getLogExecutor(Keys.logInfo).LogWriter(errorLog)
+    } catch {
+      case e2: Exception =>
+        e2.printStackTrace()
+        throw new VolansCheckException(s" ${ErrorCode.getJSON(e.getMessage)}  <- ${ErrorCode.getJSON(e2.getMessage)} <-  doLogHappenError函数将异常信息输出异常 ")
+    }
   }
 
   case class StartFlinkLoader()

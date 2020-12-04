@@ -142,7 +142,7 @@ class KeyedStateFunction(streamingConfig: StreamingConfig) extends
     if (streamingConfig.errorInfo.dirtyData.handleMode >= 0 &&
       (dirtyCount.value() * streamingConfig.flinkConfig.parallelism > streamingConfig.errorInfo.dirtyData.handleMode))
       throw new VolansCheckException(s"${ErrorCode.DIRTY_COUNT_ERROR}${ErrorCode.PATH_BREAK}  " +
-        s"脏数据超出 errorMode [${streamingConfig.errorInfo.dirtyData.handleMode}] 限制")
+        s"脏数据超出 errorMode [${streamingConfig.errorInfo.dirtyData.handleMode}] 限制, 程序结束")
   }
 
 }

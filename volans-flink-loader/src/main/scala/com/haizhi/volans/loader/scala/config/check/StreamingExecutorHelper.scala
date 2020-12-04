@@ -21,11 +21,17 @@ object StreamingExecutorHelper {
    * @return
    */
   def buildExecutors(streamingConfig: StreamingConfig): StreamingExecutor = {
-    val logExecutor = getLogExecutor(streamingConfig.errorInfo.logInfo)
-    LOG.info(s" errorExecutor = $logExecutor")
-    val dirtyExecutor = getDirtyExecutor(streamingConfig.errorInfo.dirtyData)
-    LOG.info(s" dirtyExecutor = $dirtyExecutor")
-    StreamingExecutor(logExecutor, dirtyExecutor)
+    try {
+      val logExecutor = getLogExecutor(streamingConfig.errorInfo.logInfo)
+      LOG.info(s" errorExecutor = $logExecutor")
+      val dirtyExecutor = getDirtyExecutor(streamingConfig.errorInfo.dirtyData)
+      LOG.info(s" dirtyExecutor = $dirtyExecutor")
+      StreamingExecutor(logExecutor, dirtyExecutor)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  buildExecutors 函数构建StreamingExecutor异常")
+    }
   }
 
   def getLogExecutor(logInfo: LogInfo): LogExecutor = {

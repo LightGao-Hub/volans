@@ -205,12 +205,18 @@ mvn -U  clean compile deploy  -DskipTests -DnewVersion=2.32.0
   ]
 }
 ```
-
+ ## 程序启动
+ 程序启动分两种：local 和 on yarn  
+ 1.local模式下执行bin 目录下 local_run.sh 指定 -input 参数，对照脚本中 -m you_flink_master服务器启动即可    
+ 2.on yarn 模式下执行bin 目录下 yarn_run.sh 指定 -inut 参数即可  
+ 
+ 
  ## 程序暂停
  
  程序运行中如需人为手动暂停，需要触发savepoint, bin目录下提供了两种停止作业脚本：  
  1. 本地停止脚本: local_stop.sh  
     需要提供暂停作业的jobID, 在flinkUI中即可找到
+ 
  2. flink on yarn 模式下停止脚本: yarn_stop.sh， 需要提供三种参数：    
     2.1、 存储savepoint的hdfs路径，例如：hdfs:///tmp/savepoint  
     2.2、 flink作业运行的jobID, 可以在yarnUI界面中找到ApplicationMaster UI 查看 flinkUI 找到作业ID  
@@ -218,11 +224,47 @@ mvn -U  clean compile deploy  -DskipTests -DnewVersion=2.32.0
 
  ## 程序恢复
 
+flink程序恢复分三种情况：savepoint恢复、checkpoint恢复、无checkpoint/savepoint 从kafka根据groupID获取offset恢复，这三种情况不区分local模式还是on yarn模式
+1. savepoint恢复的前提是作业是触发savepoint保存点暂停的(此时会有savepoint保存路径)，如果是非预见性异常导致中断，则只能根据checkpoint处恢复  
+恢复脚本在 bin目录下  yarn_restart.sh / lcoal_restart.sh  
+例如： sh bin/yarn_restart.sh  hdfs:///tmp/volans/savepoints/savepoint-40dcc6-a90008f0f82f 
+
+2. checkpoint恢复通常用于非预见性异常导致程序中断，此时没有savepoint保存点，就需要checkpoint恢复作业
+恢复脚本同样是: yarn_restart.sh / lcoal_restart.sh 只不过传参路径有所变化
+例如: sh bin/yarn_restart.sh hdfs:///tmp/volans/checkpoints/ec53626575215839833cacdbffd351f7/chk-34/_metadata  注意：checkpoint恢复时路径需要指定到具体的_metadata  
+
+3. 如果不通过checkpoint和 savepoint ，那就需要通过kafka中上次groupID提交的offset来进行恢复，由于业务需求，此版本2.32.0 是使用这种方式恢复，恢复时无需指定路径，按照local_run.sh / yarn_run.sh 启动程序即可  
 
  ## 度量系统：消费数量统计及脏数据统计
+ 1. 在flinkUI界面中点击正在运行的作业，由于消费数量统计及脏数据数量在keyedProcess算子中，所以需要点击此算子，例如：  
+  ![binaryTree](./pictrue/pictrue1.jpg "pictrue1")
+ 2.度量个数和并行度有关，例如并行度为3， 那么就会有6个度量值，3个消费数量度量值，3个脏数据数量度量值
+  ![binaryTree](./pictrue/pictrue2.jpg "pictrue2")
+  
+ 3.关于REST API请求获取度量值, 详见 /documentation/Flink状态获取.docx
  
+ ## 合理并行度
+ 合理计算flink的并行度是非常重要的，由于本版本2.23.0是和kafka紧密结合，所以flink并行度和kafka topic的partition个数有关,  
+ 在flink中，消费kafka中的partition合理分配到taskManager十分重要，在flink内部是利用hash散列的思想来分配kafka partition到taskManager中,  
+ 在flink中可以简单认为分配算法为：partition.getPartition() % numParallelSubtasks;  
+ 由此可以得知如果flink并行度 大于 partition总数，那么多余的并行度分配不到 partition，该并行度也就不会有数据形成浪费,  
+ 所以用户在设置flink并行度时应 <= partition总数, 这里建议flink并行度和kafka partition总数保持一致！  
  
- ## 合理并行度设置
+  ## 设置并行度
+ flink设置并行度方式分两种情况：程序中执行环境指定、脚本指定  
+ 
+ 1.程序指定:  
+ 通过configure.json -> taskConfig -> parallelism 指定并行度，从而在程序层面指定并行度创建flink env  
+ 程序指定的优先级为最高级，即当程序指定并行度时，外部无需再指定，即使指定也会以程序设置的并行度为主，所以bin/local_run.sh 中没有设置 -p 指定并行度  
+ 注意：on yarn模式下除外 
+ 
+ 2.脚本指定:  
+ local模式下如果configure.json 中指定了并行度则无需再从脚本上指定，但是从flink1.5版本后on yarn 模式依然需要指定并行度 
+ 这里摘自官网的一句话：Flink on YARN时的容器数量——亦即TaskManager数量——将由程序的并行度自动推算 
+ 因为on yarn是容器启动，而容器个数需要通过脚本中的 -p 和 -ys 来计算，ys 为一个taskManager中的slots的个数，相当于yarn中container的cores个数  
+ 如果on yarn模式下不指定-p 和 -ys 那么只会有两个容器jobManager, taskManager, 实际生产中我们建议container 个数和flink并行度保持一致  
+ 例如：-p 3 -ys 1  那么此时就是有4个container， 一个jobManager, 三个 taskManager
+ 
  
  
  ## 生产环境 FLINK 集成 HADOOP 注意事项

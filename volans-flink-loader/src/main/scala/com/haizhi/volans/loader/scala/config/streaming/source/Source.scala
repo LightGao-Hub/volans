@@ -16,7 +16,7 @@ case class Source(storeType: StoreType,
    * @return
    */
   override def check: Unit = {
-    if (StringUtils.isBlank(kafkaSourceConfig.servers) || StringUtils.isBlank(kafkaSourceConfig.topic))
+    if (StringUtils.isBlank(kafkaSourceConfig.servers) || StringUtils.isBlank(kafkaSourceConfig.topics))
       throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  KafkaSourceConfig - servers/topic isEmpy")
     if (StringUtils.isBlank(kafkaSourceConfig.groupId))
       kafkaSourceConfig.groupId = "flink-loader"

@@ -3,6 +3,7 @@ package com.haizhi.volans.sink.component
 import java.lang.reflect.Type
 
 import com.google.gson.reflect.TypeToken
+import com.haizhi.volans.common.flink.base.scala.exception.ErrorCode
 import com.haizhi.volans.common.flink.base.scala.util.JSONUtils
 import com.haizhi.volans.sink.config.constant.{CoreConstants, StoreType}
 import com.haizhi.volans.sink.config.schema.SchemaVo
@@ -29,9 +30,15 @@ object SinkContext {
    * @param configStr
    */
   def parseArgs(configStr: String): Unit = {
-    val jsonMap = JSONUtils.jsonToMap(configStr)
-    this.schemaVo = JSONUtils.fromJson(JSONUtils.toJson(jsonMap.get(CoreConstants.SCHEMA)), new TypeToken[SchemaVo]() {}.getType)
-    this.sinkList = buildSinks(jsonMap.get(CoreConstants.SINKS))
+    try{
+      val jsonMap = JSONUtils.jsonToMap(configStr)
+      this.schemaVo = JSONUtils.fromJson(JSONUtils.toJson(jsonMap.get(CoreConstants.SCHEMA)), new TypeToken[SchemaVo]() {}.getType)
+      this.sinkList = buildSinks(jsonMap.get(CoreConstants.SINKS))
+    }  catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new Exception(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK}  ${ErrorCode.getJSON(e.getMessage)} <-  sink parseArgs 函数解析上游参数异常")
+    }
   }
 
   /**

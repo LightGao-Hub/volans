@@ -66,9 +66,15 @@ object StreamingConfigHelper {
 
 
   def getSchema(map: util.Map[String, AnyRef]): SchemaVo = {
-    val schemaVo: SchemaVo = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SCHEMA)), new TypeToken[SchemaVo]() {}.getType)
-    schemaVo.check
-    schemaVo
+    try{
+      val schemaVo: SchemaVo = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SCHEMA)), new TypeToken[SchemaVo]() {}.getType)
+      schemaVo.check
+      schemaVo
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getSchema函数解析参数异常")
+    }
   }
 
   /**
@@ -112,18 +118,24 @@ object StreamingConfigHelper {
    * @return source类
    */
   def getSource(map: util.Map[String, AnyRef]): Source = {
-    val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCES)),
-      new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
-    val sourceMap: util.Map[String, AnyRef] = sourceList.get(0)
-    CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
-    val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(sourceMap, Parameter.STORE_TYPE))
-    var typeOfT: Type = null
-    if (storeType == StoreType.KAFKA) {
-      typeOfT = new TypeToken[KafkaSourceConfig]() {}.getType
-      val kafka: KafkaSourceConfig = JSONUtils.fromJson(JSONUtils.toJson(sourceMap.get(Parameter.STORE_CONFIG)), typeOfT)
-      Source(storeType, kafka)
-    } else
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} source [$storeType] 类型不存在 ")
+    try{
+      val sourceList: util.List[util.Map[String, AnyRef]] = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.SOURCES)),
+        new TypeToken[util.List[util.Map[String, AnyRef]]]() {}.getType)
+      val sourceMap: util.Map[String, AnyRef] = sourceList.get(0)
+      CheckHelper.checkNotNull(MapUtils.getString(sourceMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
+      val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(sourceMap, Parameter.STORE_TYPE))
+      var typeOfT: Type = null
+      if (storeType == StoreType.KAFKA) {
+        typeOfT = new TypeToken[KafkaSourceConfig]() {}.getType
+        val kafka: KafkaSourceConfig = JSONUtils.fromJson(JSONUtils.toJson(sourceMap.get(Parameter.STORE_CONFIG)), typeOfT)
+        Source(storeType, kafka)
+      } else
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} source [$storeType] 类型不存在 ")
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getSource函数解析参数异常")
+    }
   }
 
   /**
@@ -133,24 +145,30 @@ object StreamingConfigHelper {
    * @return dirtySink
    */
   def getDirtyData(map: util.Map[String, AnyRef]): DirtyData = {
-    val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
-    val dirtyMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.DIRTY_DATA)))
-    CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
-    val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE))
-    var typeOfT: Type = null
-    if (storeType == StoreType.FILE)
-      typeOfT = new TypeToken[FileConfig]() {}.getType
-    else
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} dirtySink [$storeType] 类型不存在 ")
+    try{
+      val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
+      val dirtyMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.DIRTY_DATA)))
+      CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
+      val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(dirtyMap, Parameter.STORE_TYPE))
+      var typeOfT: Type = null
+      if (storeType == StoreType.FILE)
+        typeOfT = new TypeToken[FileConfig]() {}.getType
+      else
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} dirtySink [$storeType] 类型不存在 ")
 
-    CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.CONFIG), Parameter.CONFIG)
-    val handleMode = dirtyMap.getOrDefault(Parameter.HANDLE_MODE, Long.box(-1L)).asInstanceOf[Long]
-    val storeEnabled = dirtyMap.getOrDefault(Parameter.STORE_ENABLED, Boolean.box(false)).asInstanceOf[Boolean]
-    val storeRowsLimit = dirtyMap.getOrDefault(Parameter.STORE_ROWS_LIMIT, Long.box(30000)).asInstanceOf[Long]
-    val inboundTaskId = dirtyMap.get(Parameter.INBOUND_TASKID).asInstanceOf[String]
-    val taskInstanceId = dirtyMap.get(Parameter.TASK_INSTANCEID).asInstanceOf[String]
+      CheckHelper.checkNotNull(MapUtils.getString(dirtyMap, Parameter.CONFIG), Parameter.CONFIG)
+      val handleMode = dirtyMap.getOrDefault(Parameter.HANDLE_MODE, Long.box(-1L)).asInstanceOf[Long]
+      val storeEnabled = dirtyMap.getOrDefault(Parameter.STORE_ENABLED, Boolean.box(false)).asInstanceOf[Boolean]
+      val storeRowsLimit = dirtyMap.getOrDefault(Parameter.STORE_ROWS_LIMIT, Long.box(30000)).asInstanceOf[Long]
+      val inboundTaskId = dirtyMap.get(Parameter.INBOUND_TASKID).asInstanceOf[String]
+      val taskInstanceId = dirtyMap.get(Parameter.TASK_INSTANCEID).asInstanceOf[String]
 
-    DirtyData(storeType, handleMode, storeEnabled, storeRowsLimit, inboundTaskId, taskInstanceId, JSONUtils.fromJson(JSONUtils.toJson(dirtyMap.get(Parameter.CONFIG)), typeOfT))
+      DirtyData(storeType, handleMode, storeEnabled, storeRowsLimit, inboundTaskId, taskInstanceId, JSONUtils.fromJson(JSONUtils.toJson(dirtyMap.get(Parameter.CONFIG)), typeOfT))
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getDirtyData函数解析参数异常")
+    }
   }
 
   /**
@@ -160,18 +178,24 @@ object StreamingConfigHelper {
    * @return errorSink
    */
   def getLogInfo(map: util.Map[String, AnyRef]): LogInfo = {
-    val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
-    val logMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.LOG_INFO)))
-    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
-    val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(logMap, Parameter.STORE_TYPE))
-    var typeOfT: Type = null
-    if (storeType == StoreType.FILE)
-      typeOfT = new TypeToken[FileConfig]() {}.getType
-    else
-      throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} errorSink [$storeType] 类型不存在 ")
-    CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.CONFIG), Parameter.CONFIG)
-    val value:FileConfig = JSONUtils.fromJson(JSONUtils.toJson(logMap.get(Parameter.CONFIG)), typeOfT)
-    LogInfo(storeType, value)
+    try{
+      val errorMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(map.get(Parameter.ERROR_INFO)))
+      val logMap: util.Map[String, AnyRef] = JSONUtils.jsonToMap(JSONUtils.toJson(errorMap.get(Parameter.LOG_INFO)))
+      CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.STORE_TYPE), Parameter.STORE_TYPE)
+      val storeType: StoreType = StoreType.findStoreType(MapUtils.getString(logMap, Parameter.STORE_TYPE))
+      var typeOfT: Type = null
+      if (storeType == StoreType.FILE)
+        typeOfT = new TypeToken[FileConfig]() {}.getType
+      else
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} errorSink [$storeType] 类型不存在 ")
+      CheckHelper.checkNotNull(MapUtils.getString(logMap, Parameter.CONFIG), Parameter.CONFIG)
+      val value:FileConfig = JSONUtils.fromJson(JSONUtils.toJson(logMap.get(Parameter.CONFIG)), typeOfT)
+      LogInfo(storeType, value)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getLogInfo函数解析参数异常")
+    }
   }
 
   /**
@@ -181,9 +205,15 @@ object StreamingConfigHelper {
    * @return flinkConfig
    */
   def getFlinkConfig(map: util.Map[String, AnyRef]): FlinkConfig = {
-    val flinkConfing: FlinkConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.TASK_CONFIG)), new TypeToken[FlinkConfig]() {}.getType)
-    flinkConfing.check
-    flinkConfing
+    try{
+      val flinkConfing: FlinkConfig = JSONUtils.fromJson(JSONUtils.toJson(map.get(Parameter.TASK_CONFIG)), new TypeToken[FlinkConfig]() {}.getType)
+      flinkConfing.check
+      flinkConfing
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getFlinkConfig函数解析参数异常")
+    }
   }
 
 
@@ -194,10 +224,16 @@ object StreamingConfigHelper {
    * @return sparkConfig
    */
   def getSinks(map: util.Map[String, AnyRef]): String = {
-    CheckHelper.checkSinks(map)
-    CheckHelper.checkSchema(map)
-    val sinks: Sinks = Sinks(map.get(Parameter.SINKS), map.get(Parameter.SCHEMA))
-    JSONUtils.toJson(sinks)
+    try {
+      CheckHelper.checkSinks(map)
+      CheckHelper.checkSchema(map)
+      val sinks: Sinks = Sinks(map.get(Parameter.SINKS), map.get(Parameter.SCHEMA))
+      JSONUtils.toJson(sinks)
+    } catch {
+      case e: Exception =>
+        e.printStackTrace()
+        throw new VolansCheckException(s"${ErrorCode.PARAMETER_CHECK_ERROR}${ErrorCode.PATH_BREAK} ${ErrorCode.getJSON(e.getMessage)} <- getSinks函数解析参数异常")
+    }
   }
 
 

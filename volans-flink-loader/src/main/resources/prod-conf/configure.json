@@ -173,7 +173,7 @@
       "storeConfig": {
         "servers": "cmb01:9092",
         "groupId": "grouoId02",
-        "topic": "flink_topic2",
+        "topics": "flink_topic2",
         "config": {
         }
       }

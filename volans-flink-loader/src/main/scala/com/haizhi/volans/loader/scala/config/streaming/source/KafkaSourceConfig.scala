@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils
  */
 case class KafkaSourceConfig(servers: String,
                              var groupId: String,
-                             topic: String,
+                             topics: String,
                              config: java.util.Map[String, Object] = null) {
 
 

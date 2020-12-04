@@ -34,6 +34,13 @@ object ErrorCode {
       JSONUtils.toJson(ErrorMessage(id, object_key, task_instance_id, code, message, affected_store, data_row, updated_dt))
   }
 
+  def getJSON(message: String): String = {
+    if(message.contains(s"$PATH_BREAK"))
+      message.split(s"$PATH_BREAK")(1)
+    else
+      message
+  }
+
   def NowDate(): String = {
     val now: Date = new Date()
     val dateFormat: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
