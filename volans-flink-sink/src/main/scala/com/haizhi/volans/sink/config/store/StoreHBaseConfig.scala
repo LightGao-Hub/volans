@@ -18,7 +18,7 @@ case class StoreHBaseConfig(url: String = null,
   }
 
   def getScalaConfigMap(): Map[String, AnyRef] = {
-    this.config.toMap
+    if(this.config == null)Map.empty[String,AnyRef]  else this.config.toMap
   }
 
   def getHBaseTable(): String = {
