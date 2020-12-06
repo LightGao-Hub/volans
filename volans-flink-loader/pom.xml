@@ -12,7 +12,7 @@
     <artifactId>volans-flink-loader</artifactId>
 
     <dependencies>
-        <!--common start-->
+        <!--common start   -->
         <dependency>
             <groupId>com.haizhi</groupId>
             <artifactId>volans-common-flink-base</artifactId>
